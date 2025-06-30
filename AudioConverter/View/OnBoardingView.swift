@@ -10,6 +10,9 @@ import SwiftUI
 struct OnboardingView: View {
     @Binding var showOnboarding: Bool
     @State var selectedViewIndex = 0
+    
+//    let purchaseManager = PurchaseManager.instance
+    
     var body: some View {
         switch selectedViewIndex {
         case 0:
@@ -18,6 +21,9 @@ struct OnboardingView: View {
             SubOnboardingView(showOnboarding: $showOnboarding, selectedViewIndex: $selectedViewIndex, title: "Convert video & extract audio", subTitle: "A convenient way to get audio in three taps", banerImage: .bannerOnboarding02, icon: .loader2)
         case 2:
             SubOnboardingView(showOnboarding: $showOnboarding, selectedViewIndex: $selectedViewIndex, title: "Reviews from users who trust", subTitle: "Use the app to the fullest and leave your personal feedback", banerImage: .bannerOnboarding03, icon: .loader3)
+                .onAppear {
+//                    purchaseManager.setDevice()
+                }
         case 3:
             SubOnboardingView(showOnboarding: $showOnboarding, selectedViewIndex: $selectedViewIndex, title: "Create GIFs & convert images", subTitle: "Create your GIFs & save converted files and images to custom folders in the app", banerImage: .bannerOnboarding05, icon: .loader4)
         case 4:

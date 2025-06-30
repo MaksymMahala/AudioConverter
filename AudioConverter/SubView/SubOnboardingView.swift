@@ -70,56 +70,14 @@ struct SubOnboardingView: View {
                     .padding(.horizontal)
             }
             
-            HStack {
-                Button {
-                    withAnimation {
-                        
-                    }
-                } label: {
-                    Text("Privacy Policy")
-                        .foregroundStyle(Color.lightBlack529)
-                        .font(Font.custom(size: 12, weight: .regular))
-                }
+            TermsOfUseSection(
+                privacyPolicyAction: {
                 
-                Spacer()
+            }, restoreAction: {
                 
-                Divider()
-                    .frame(width: 1)
-                    .frame(height: 15)
-                    .overlay(Color.lightBlack529)
+            }, termsOfUseAction: {
                 
-                Spacer()
-
-                Button {
-                    withAnimation {
-                        
-                    }
-                } label: {
-                    Text("Restore")
-                        .foregroundStyle(Color.lightBlack529)
-                        .font(Font.custom(size: 12, weight: .regular))
-                }
-                
-                Spacer()
-                
-                Divider()
-                    .frame(width: 1)
-                    .frame(height: 15)
-                    .overlay(Color.lightBlack529)
-                
-                Spacer()
-                
-                Button {
-                    withAnimation {
-                        
-                    }
-                } label: {
-                    Text("Terms of Use")
-                        .foregroundStyle(Color.lightBlack529)
-                        .font(Font.custom(size: 12, weight: .regular))
-                }
-            }
-            .padding(.horizontal, 30)
+            })
         }
         .multilineTextAlignment(.center)
     }

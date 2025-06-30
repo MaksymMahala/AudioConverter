@@ -2,11 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.873497851958-eu6tkteibi6vj1jqemvpgvnptk96d3so</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>MoriGothic-Medium.ttf</string>
 		<string>MoriGothic-Regular.ttf</string>
 		<string>MoriGothic-Bold.ttf</string>
+		<string>MoriGothic-SemiBold.ttf</string>
 	</array>
 </dict>
 </plist>

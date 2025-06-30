@@ -18,7 +18,7 @@ struct CustomTabBar: View {
         VStack {
             switch selectedTab {
             case .convert:
-                EmptyView()
+                MenuView()
             case .files:
                 EmptyView()
             case .works:
@@ -37,6 +37,7 @@ struct CustomTabBar: View {
             }
             .frame(height: 60)
             .background(Color.white)
+            .padding(.bottom)
         }
         .navigationBarBackButtonHidden()
     }

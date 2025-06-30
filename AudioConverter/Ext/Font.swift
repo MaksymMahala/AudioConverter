@@ -13,6 +13,10 @@ extension Font {
         switch weight {
         case .medium:
             return .custom("MoriGothic-Medium", size: size)
+        case .semibold:
+            return .custom("MoriGothic-SemiBold", size: size)
+        case .bold:
+            return .custom("MoriGothic-Bold", size: size)
         default:
             return .custom("MoriGothic-Regular", size: size)
         }

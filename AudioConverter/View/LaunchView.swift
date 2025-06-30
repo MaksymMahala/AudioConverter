@@ -9,14 +9,19 @@ import SwiftUI
 
 struct LaunchView: View {
     @State private var animate = false
-    @State private var showOnboarding = false
+    @State private var showNextView = false
     @State private var rotation = false
     @State private var opacity: Double = 0.5
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
 
     var body: some View {
         ZStack {
-            if showOnboarding {
-                OnboardingView(showOnboarding: $showOnboarding)
+            if showNextView {
+                if isLoggedIn {
+                    CustomTabBar()
+                } else {
+                    OnboardingView(showOnboarding: $showNextView)
+                }
             } else {
                 VStack {
                     Image(.logoIcon)
@@ -28,15 +33,15 @@ struct LaunchView: View {
                         .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: animate)
                         .animation(.easeInOut(duration: 1.5), value: opacity)
                 }
-                .onAppear {
-                    opacity = 1.0
-                    animate = true
+            }
+        }
+        .onAppear {
+            opacity = 1.0
+            animate = true
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                        withAnimation {
-                            showOnboarding = true
-                        }
-                    }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                withAnimation {
+                    showNextView = true
                 }
             }
         }

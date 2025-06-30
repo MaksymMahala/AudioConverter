@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PayWallView: View {
+//    @StateObject private var viewModel = PayWallViewModel()
     @Binding var showOnboarding: Bool
     var subTitle = "3-day trial, then $3.50/week for full access, or proceed with limited version"
     
@@ -44,6 +45,7 @@ struct PayWallView: View {
                 HStack(spacing: 0) {
                     Text("access, or")
                     Button(action: {
+                        UserDefaultsManager.isLoggedIn = true
                     }) {
                         Text(" proceed with limited version")
                             .underline()
@@ -59,7 +61,11 @@ struct PayWallView: View {
 
             Button {
                 withAnimation {
-               
+//                    if let product = viewModel.selectedProduct {
+//                        viewModel.purchaseProduct(product.productId) {
+//                            UserDefaultsManager.isLoggedIn = true
+//                        }
+//                    }
                 }
             } label: {
                 Text("Next")
@@ -72,58 +78,22 @@ struct PayWallView: View {
                     .padding(.horizontal)
             }
             
-            HStack {
-                Button {
-                    withAnimation {
-                        
-                    }
-                } label: {
-                    Text("Privacy Policy")
-                        .foregroundStyle(Color.lightBlack529)
-                        .font(Font.custom(size: 12, weight: .regular))
-                }
+            TermsOfUseSection(
+                privacyPolicyAction: {
                 
-                Spacer()
+            }, restoreAction: {
+//                viewModel.restorePurchases()
+            }, termsOfUseAction: {
                 
-                Divider()
-                    .frame(width: 1)
-                    .frame(height: 15)
-                    .overlay(Color.lightBlack529)
-                
-                Spacer()
-
-                Button {
-                    withAnimation {
-                        
-                    }
-                } label: {
-                    Text("Restore")
-                        .foregroundStyle(Color.lightBlack529)
-                        .font(Font.custom(size: 12, weight: .regular))
-                }
-                
-                Spacer()
-                
-                Divider()
-                    .frame(width: 1)
-                    .frame(height: 15)
-                    .overlay(Color.lightBlack529)
-                
-                Spacer()
-                
-                Button {
-                    withAnimation {
-                        
-                    }
-                } label: {
-                    Text("Terms of Use")
-                        .foregroundStyle(Color.lightBlack529)
-                        .font(Font.custom(size: 12, weight: .regular))
-                }
-            }
-            .padding(.horizontal, 30)
+            })
         }
         .multilineTextAlignment(.center)
+        .onAppear {
+//            viewModel.purchaseManager.activate()
+//            Task {
+//                await viewModel.loadPaywallSub()
+//            }
+        }
     }
 }
 
