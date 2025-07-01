@@ -22,7 +22,7 @@ struct CustomTabBar: View {
             case .files:
                 EmptyView()
             case .works:
-                EmptyView()
+                WorksView()
             case .settings:
                 SettingsView()
             }

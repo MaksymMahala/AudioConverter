@@ -7,21 +7,27 @@
 
 import AVFoundation
 import Combine
+import UniformTypeIdentifiers
 
 final class PlayerViewModel: ObservableObject {
     @Published var currentTime: Double = 0
     @Published var isPlaying: Bool = false
     @Published var duration: Double?
     @Published var currentEffect: String? = nil
-    @Published var selectedTab = "Editing"
     @Published var waveform: [CGFloat] = []
     
+    //MARK: Formats
+    @Published var selectedFormat: String = "MP3"
+    @Published var selectedTab = "Editing"
+    let availableFormats = ["CAF", "MP3", "M4F", "WAV 44100"]
+
+    //MARK: Audio
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private let reverb = AVAudioUnitReverb()
     private let eq = AVAudioUnitEQ(numberOfBands: 2)
 
-    private var audioFile: AVAudioFile?
+    var audioFile: AVAudioFile?
     private var timeObserver: Any?
     private var timer: Timer?
 
@@ -185,8 +191,90 @@ final class PlayerViewModel: ObservableObject {
         let seconds = Int(time) % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
+    
+    func saveConvertedFileToDB(url: URL, fileName: String) {
+        CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: "audio")
+    }
 
     deinit {
         stop()
+    }
+}
+
+extension PlayerViewModel {
+    func convertAndShare(originalAudioURL: URL, completion: @escaping (URL?) -> Void) {
+        let ext: String
+        let preset: String
+
+        switch selectedFormat {
+        case "CAF":
+            ext = "caf"
+            preset = AVAssetExportPresetPassthrough
+        case "M4F":
+            ext = "m4a"
+            preset = AVAssetExportPresetAppleM4A
+        case "WAV 44100":
+            ext = "wav"
+            preset = AVAssetExportPresetPassthrough
+        case "MP3":
+            exportMP3(from: originalAudioURL) { mp3URL in
+                if let mp3URL = mp3URL {
+                    completion(mp3URL)
+                } else {
+                    print("MP3 export failed")
+                    completion(nil)
+                }
+            }
+            return
+        default:
+            ext = "m4a"
+            preset = AVAssetExportPresetAppleM4A
+        }
+
+        let asset = AVURLAsset(url: originalAudioURL)
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: preset) else {
+            print("Could not create export session")
+            completion(nil)
+            return
+        }
+
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
+
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = fileType(forExtension: ext)
+        exportSession.shouldOptimizeForNetworkUse = true
+
+        exportSession.exportAsynchronously {
+            DispatchQueue.main.async {
+                switch exportSession.status {
+                case .completed:
+                    completion(outputURL)
+                case .failed, .cancelled:
+                    print("Export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
+                    completion(nil)
+                default:
+                    completion(nil)
+                }
+            }
+        }
+    }
+
+    private func fileType(forExtension ext: String) -> AVFileType {
+        switch ext.lowercased() {
+        case "caf": return .caf
+        case "m4a": return .m4a
+        case "wav": return .wav
+        default: return .m4a
+        }
+    }
+    
+    func exportMP3(from pcmURL: URL, completion: @escaping (URL?) -> Void) {
+        let mp3URL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp3")
+        DispatchQueue.global(qos: .userInitiated).async {
+            let success = MP3Encoder.convertPCMtoMP3(pcmURL: pcmURL, mp3URL: mp3URL)
+            DispatchQueue.main.async {
+                completion(success ? mp3URL : nil)
+            }
+        }
     }
 }
