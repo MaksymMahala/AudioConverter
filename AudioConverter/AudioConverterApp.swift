@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct CleanerApp: App {
-//    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
         WindowGroup {
             LaunchView()

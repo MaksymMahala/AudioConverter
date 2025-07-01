@@ -21,4 +21,31 @@ final class VideoToolsViewModel: ObservableObject {
         ToolItem(title: "Watermark", subtitle: "", iconName: "iconoir_text-square"),
         ToolItem(title: "Set cover", subtitle: "", iconName: "iconoir_bookmark-book")
     ]
+    
+    @Published var inputLink: String = ""
+    @Published var isDrivePickerPresented = false
+    @Published var isDocumentPickerPresented = false
+    @Published var videoURL: URL?
+    @Published var isLoadingVideo = false
+    @Published var openAudioView = false
+    @Published var isEditorPresented = false
+    @Published var isLinkValid: Bool = false
+    @Published var isCameraPresented = false
+
+    func validateLink() {
+        guard let url = URL(string: inputLink),
+              url.scheme?.starts(with: "http") == true else {
+            isLinkValid = false
+            return
+        }
+        
+        let videoExtensions = ["mp4", "mov", "m4v"]
+        if videoExtensions.contains(url.pathExtension.lowercased()) {
+            videoURL = url
+            isLinkValid = true
+        } else {
+            videoURL = url
+            isLinkValid = true
+        }
+    }
 }

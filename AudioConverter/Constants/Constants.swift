@@ -13,5 +13,5 @@ struct Constants {
     static let rateUs = "https://your-support-url.com"
     static let support = "https://your-support-url.com"
     static let contactUsLink = "https://your-support-url.com"
-    static let clientID = ""
+    static let clientID = "873497851958-eu6tkteibi6vj1jqemvpgvnptk96d3so.apps.googleusercontent.com"
 }

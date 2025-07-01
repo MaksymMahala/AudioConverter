@@ -5,27 +5,30 @@
 //  Created by Max on 30.06.2025.
 //
 
+import UIKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DocumentPicker: UIViewControllerRepresentable {
     @Binding var videoURL: URL?
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.movie, .video], asCopy: true)
-        picker.delegate = context.coordinator
-        return picker
+        let controller = UIDocumentPickerViewController(forOpeningContentTypes: [.movie, .video], asCopy: true)
+        controller.delegate = context.coordinator
+        controller.allowsMultipleSelection = false
+        return controller
     }
 
     func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
 
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
     class Coordinator: NSObject, UIDocumentPickerDelegate {
         let parent: DocumentPicker
 
-        init(_ parent: DocumentPicker) {
+        init(parent: DocumentPicker) {
             self.parent = parent
         }
 

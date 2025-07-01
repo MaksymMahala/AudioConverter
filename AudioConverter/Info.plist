@@ -7,10 +7,12 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.873497851958-eu6tkteibi6vj1jqemvpgvnptk96d3so</string>
+				<string>com.googleusercontent.apps.945973136262-8k0s811c7ip2cn0e4pfqgb7q4b56o38s</string>
 			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>945973136262-8k0s811c7ip2cn0e4pfqgb7q4b56o38s.apps.googleusercontent.com</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>MoriGothic-Medium.ttf</string>

@@ -24,7 +24,7 @@ struct CustomTabBar: View {
             case .works:
                 EmptyView()
             case .settings:
-                EmptyView()
+                SettingsView()
             }
 
             Spacer()

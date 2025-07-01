@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8457FE232E12F5E000704D10 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 8457FE222E12F5E000704D10 /* GoogleSignIn */; };
+		8457FE252E12F5E000704D10 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8457FE242E12F5E000704D10 /* GoogleSignInSwift */; };
+		8457FE282E12F5E900704D10 /* ApphudSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 8457FE272E12F5E900704D10 /* ApphudSDK */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		84011A162E1152E70072B010 /* AudioConverter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioConverter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +42,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8457FE282E12F5E900704D10 /* ApphudSDK in Frameworks */,
+				8457FE232E12F5E000704D10 /* GoogleSignIn in Frameworks */,
+				8457FE252E12F5E000704D10 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +114,10 @@
 			);
 			mainGroup = 84011A0D2E1152E70072B010;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8457FE212E12F5E000704D10 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				8457FE262E12F5E900704D10 /* XCRemoteSwiftPackageReference "ApphudSDK" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 84011A172E1152E70072B010 /* Products */;
 			projectDirPath = "";
@@ -267,8 +280,11 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AudioConverter/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to take photos.";
 				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app requires access to your files for importing documents.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app requires access to the microphone to record audio.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Потрібен доступ для збереження";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app requires access to your photo library to upload images.";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This app uses your data to provide personalized ads and improve your experience.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -306,8 +322,11 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AudioConverter/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to take photos.";
 				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app requires access to your files for importing documents.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app requires access to the microphone to record audio.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Потрібен доступ для збереження";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app requires access to your photo library to upload images.";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This app uses your data to provide personalized ads and improve your experience.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -355,6 +374,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8457FE212E12F5E000704D10 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+		8457FE262E12F5E900704D10 /* XCRemoteSwiftPackageReference "ApphudSDK" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apphud/ApphudSDK";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.6.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8457FE222E12F5E000704D10 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8457FE212E12F5E000704D10 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		8457FE242E12F5E000704D10 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8457FE212E12F5E000704D10 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		8457FE272E12F5E900704D10 /* ApphudSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8457FE262E12F5E900704D10 /* XCRemoteSwiftPackageReference "ApphudSDK" */;
+			productName = ApphudSDK;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 84011A0E2E1152E70072B010 /* Project object */;
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PayWallView: View {
-//    @StateObject private var viewModel = PayWallViewModel()
+    @StateObject private var viewModel = PayWallViewModel()
     @Binding var showOnboarding: Bool
     var subTitle = "3-day trial, then $3.50/week for full access, or proceed with limited version"
     
@@ -61,11 +61,11 @@ struct PayWallView: View {
 
             Button {
                 withAnimation {
-//                    if let product = viewModel.selectedProduct {
-//                        viewModel.purchaseProduct(product.productId) {
-//                            UserDefaultsManager.isLoggedIn = true
-//                        }
-//                    }
+                    if let product = viewModel.selectedProduct {
+                        viewModel.purchaseProduct(product.productId) {
+                            UserDefaultsManager.isLoggedIn = true
+                        }
+                    }
                 }
             } label: {
                 Text("Next")
@@ -82,17 +82,17 @@ struct PayWallView: View {
                 privacyPolicyAction: {
                 
             }, restoreAction: {
-//                viewModel.restorePurchases()
+                viewModel.restorePurchases()
             }, termsOfUseAction: {
                 
             })
         }
         .multilineTextAlignment(.center)
         .onAppear {
-//            viewModel.purchaseManager.activate()
-//            Task {
-//                await viewModel.loadPaywallSub()
-//            }
+            viewModel.purchaseManager.activate()
+            Task {
+                await viewModel.loadPaywallSub()
+            }
         }
     }
 }

@@ -6,128 +6,123 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
-import PhotosUI
-import AVFoundation
 
 struct AudioConversionSheet: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var videoURL: URL?
-    @State private var inputLink: String = ""
-    @State private var isDocumentPickerPresented = false
-    @State private var isPhotoPickerPresented = false
-    @State private var isCameraPresented = false
-    @State private var selectedItem: PhotosPickerItem? = nil
-    @State private var isLinkValid = false
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: VideoToolsViewModel
+    @StateObject private var driveViewModel = GoogleDriveViewModel()
+    @StateObject private var signInViewModel = GoogleSignInViewModel()
+    
+    @State private var isVideoPickerPresented = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Import from the link")
-                            .font(Font.custom(size: 16, weight: .bold))
-                            .foregroundStyle(Color.black)
-                        
-                        TextField("Add link", text: $inputLink)
-                            .padding(12)
-                            .background(Color.gray20)
-                            .font(Font.custom(size: 16, weight: .medium))
-                            .cornerRadius(8)
-                            .keyboardType(.URL)
-                        
-                        Button(action: {
-                            validateLink()
-                        }) {
-                            Text("Add")
-                                .font(Font.custom(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.darkPurple)
-                                .cornerRadius(30)
-                        }
+                content
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
                     }
-                    .padding()
-                    .padding(.vertical)
-                    .background(Color.grayF7F8FA)
-                    .cornerRadius(20)
-                    .padding()
-                    
-                    Group {
-                        ButtonRow(title: "Google Drive", systemImage: "triangle") {
-                            print("Google Drive tapped")
-                        }
-                        
-                        ButtonRow(title: "Import file", systemImage: "folder") {
-                            isDocumentPickerPresented = true
-                        }
-                        
-                        ButtonRow(title: "Photo library", systemImage: "photo.on.rectangle") {
-                            isPhotoPickerPresented = true
-                        }
-                        
-                        ButtonRow(title: "Take a photo", systemImage: "camera") {
-                            isCameraPresented = true
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Spacer()
                 }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button {
-                        } label: {
-                            Image(.iconoirXmark)
-                        }
-                    }
-                    ToolbarItem(placement: .principal) {
-                        Button {
-                        } label: {
-                            Text("Audio conversion")
-                                .font(Font.custom(size: 18, weight: .bold))
-                                .foregroundColor(.black)
-                        }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                        } label: {
-                            Image(.iconoirXmark)
-                        }
+                ToolbarItem(placement: .principal) {
+                    Text("Audio conversion")
+                        .font(.headline)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
                     }
                 }
             }
         }
-        .sheet(isPresented: $isDocumentPickerPresented) {
-            DocumentPicker(videoURL: $videoURL)
+        .sheet(isPresented: $viewModel.isDocumentPickerPresented) {
+            DocumentPicker(videoURL: $viewModel.videoURL)
         }
-        .photosPicker(isPresented: $isPhotoPickerPresented, selection: $selectedItem, matching: .videos)
-        .fullScreenCover(isPresented: $isCameraPresented) {
-            CameraCaptureView(videoURL: $videoURL)
+        .fullScreenCover(isPresented: $viewModel.isCameraPresented) {
+            CameraCaptureView(videoURL: $viewModel.videoURL)
         }
-        .onChange(of: selectedItem) { newItem, _ in
-            Task {
-                if let item = newItem {
-                    if let url = try? await item.loadTransferable(type: URL.self) {
-                        self.videoURL = url
+        .sheet(isPresented: $viewModel.isDrivePickerPresented) {
+            DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
+                viewModel.videoURL = selectedURL
+            }
+        }
+        .sheet(isPresented: $isVideoPickerPresented) {
+            VideoPicker(videoURL: $viewModel.videoURL, isPresented: $isVideoPickerPresented, errorMessage: $errorMessage)
+                .onDisappear {
+                    viewModel.isLoadingVideo = true
+                    viewModel.isEditorPresented = true
+                }
+        }
+        .alert("Uploading troubles", isPresented: Binding<Bool>(
+               get: { errorMessage != nil },
+               set: { newValue in
+                   if !newValue { errorMessage = nil }
+               }
+           )) {
+               Button("OK", role: .cancel) {}
+           } message: {
+               Text(errorMessage ?? "")
+           }
+    }
+
+    private var content: some View {
+        VStack(spacing: 20) {
+            linkImportSection
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(16)
+                .padding(.horizontal)
+
+            Group {
+                ButtonRow(title: "Google Drive", systemImage: "triangle") {
+                    if let token = signInViewModel.accessToken {
+                        driveViewModel.accessToken = token
+                        viewModel.isDrivePickerPresented = true
+                    } else {
+                        signInViewModel.signIn()
                     }
                 }
+                ButtonRow(title: "Import file", systemImage: "folder") {
+                    viewModel.isDocumentPickerPresented = true
+                }
+                ButtonRow(title: "Photo library", systemImage: "photo.on.rectangle") {
+                    isVideoPickerPresented = true  // відкриваємо кастомний відео пікер
+                }
+                ButtonRow(title: "Take a photo", systemImage: "camera") {
+                    viewModel.isCameraPresented = true
+                }
+            }
+            .padding(.horizontal)
+
+            Spacer()
+        }
+    }
+
+    private var linkImportSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Import from the link")
+                .font(.headline)
+
+            TextField("Add link", text: $viewModel.inputLink)
+                .padding()
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(8)
+                .keyboardType(.URL)
+
+            Button(action: {
+                viewModel.validateLink()
+            }) {
+                Text("Add")
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.purple)
+                    .cornerRadius(10)
             }
         }
     }
-
-    private func validateLink() {
-        if let url = URL(string: inputLink), UIApplication.shared.canOpenURL(url) {
-            videoURL = url
-            isLinkValid = true
-        } else {
-            isLinkValid = false
-        }
-    }
-}
-
-#Preview {
-    AudioConversionSheet()
 }

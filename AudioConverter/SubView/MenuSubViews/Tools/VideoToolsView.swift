@@ -29,7 +29,7 @@ struct VideoToolsView: View {
                 ForEach(viewModel.tools) { tool in
                     Button {
                         withAnimation {
-                            
+                            viewModel.openAudioView = true
                         }
                     } label: {
                         ToolCard(tool: tool)
@@ -52,6 +52,12 @@ struct VideoToolsView: View {
             }
             .padding(.horizontal)
             .padding(.top, 6)
+        }
+        .sheet(isPresented: $viewModel.openAudioView) {
+            AudioConversionSheet(viewModel: viewModel)
+        }
+        .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
+            AudioEditorView(videoURL: viewModel.videoURL, isLoading: $viewModel.isLoadingVideo)
         }
     }
 }

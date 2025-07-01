@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct OnboardingView: View {
     @Binding var showOnboarding: Bool
     @State var selectedViewIndex = 0
     
-//    let purchaseManager = PurchaseManager.instance
+    let purchaseManager = PurchaseManager.instance
     
     var body: some View {
         switch selectedViewIndex {
@@ -22,10 +23,13 @@ struct OnboardingView: View {
         case 2:
             SubOnboardingView(showOnboarding: $showOnboarding, selectedViewIndex: $selectedViewIndex, title: "Reviews from users who trust", subTitle: "Use the app to the fullest and leave your personal feedback", banerImage: .bannerOnboarding03, icon: .loader3)
                 .onAppear {
-//                    purchaseManager.setDevice()
+                    purchaseManager.setDevice()
                 }
         case 3:
             SubOnboardingView(showOnboarding: $showOnboarding, selectedViewIndex: $selectedViewIndex, title: "Create GIFs & convert images", subTitle: "Create your GIFs & save converted files and images to custom folders in the app", banerImage: .bannerOnboarding05, icon: .loader4)
+                .onAppear {
+                    showReview()
+                }
         case 4:
             SubOnboardingView(showOnboarding: $showOnboarding, selectedViewIndex: $selectedViewIndex, title: "Convert, edit & store securely", subTitle: "Create a personal folder with limited access and securely store documents", banerImage: .bannerOnboarding06, icon: .loader5)
         case 5:
@@ -33,6 +37,11 @@ struct OnboardingView: View {
         default:
             EmptyView()
         }
+    }
+    
+    private func showReview() {
+        guard let scene = UIApplication.shared.foregroundActiveScene else { return }
+        SKStoreReviewController.requestReview(in: scene)
     }
 }
 

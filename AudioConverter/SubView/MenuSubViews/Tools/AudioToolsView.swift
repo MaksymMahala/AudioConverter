@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import AVFoundation
+import _AVKit_SwiftUI
 
 struct AudioToolsView: View {
-    @StateObject private var viewModel = AudioToolsViewModel()
+    @StateObject private var viewModel = AudioConversionViewModel()
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -35,7 +37,7 @@ struct AudioToolsView: View {
                 }
             }
             .padding(.horizontal)
-
+            
             Button {
             } label: {
                 WideToolCard(tool: viewModel.bottomTool)

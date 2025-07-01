@@ -5,120 +5,82 @@
 //  Created by Max on 30.06.2025.
 //
 
-import SwiftUI
-//import GoogleSignIn
-//import GoogleAPIClientForREST
-//import GTMSessionFetcher
+import UIKit
+import GoogleSignIn
 
-//class GoogleDriveViewModel: ObservableObject {
-//    @Published var isSignedIn = false
-//    @Published var driveFiles: [GTLRDrive_File] = []
-//    @Published var downloadedImage: UIImage?
-//
-//    private let driveService = GTLRDriveService()
-//    private let clientID = "873497851958-eu6tkteibi6vj1jqemvpgvnptk96d3so.apps.googleusercontent.com"
-//
-//    func signIn() {
-//        guard let rootViewController = UIApplication.shared
-//            .connectedScenes
-//            .compactMap({ $0 as? UIWindowScene })
-//            .flatMap({ $0.windows })
-//            .first(where: { $0.isKeyWindow })?
-//            .rootViewController else {
-//                print("No root view controller found")
-//                return
-//        }
-//
-//        let configuration = GIDConfiguration(clientID: clientID)
-//
-//        GIDSignIn.sharedInstance.signIn(with: configuration, presenting: rootViewController) { [weak self] user, error in
-//            guard let self = self else { return }
-//            
-//            if let error = error {
-//                print("Google Sign-In error: \(error.localizedDescription)")
-//                return
-//            }
-//            
-//            guard let user = user else {
-//                print("Missing user")
-//                return
-//            }
-//               
-//            let accessToken = user.authentication.accessToken
-//            let authorizer = GTMFetcherAuthorizationWrapper(accessToken: accessToken)
-//            self.driveService.authorizer = authorizer
-//            self.isSignedIn = true
-//            self.listDriveImages()
-//        }
-//    }
-//
-//    func listDriveImages() {
-//        let query = GTLRDriveQuery_FilesList.query()
-//        query.q = "mimeType contains 'image/' and trashed = false"
-//        query.pageSize = 50
-//        query.fields = "files(id, name, mimeType)"
-//
-//        driveService.executeQuery(query) { [weak self] (_, result, error) in
-//            if let error = error {
-//                print("Drive API error: \(error)")
-//                return
-//            }
-//
-//            if let filesList = result as? GTLRDrive_FileList {
-//                DispatchQueue.main.async {
-//                    self?.driveFiles = filesList.files ?? []
-//                }
-//            }
-//        }
-//    }
-//
-//    func downloadImage(file: GTLRDrive_File) {
-//        guard let fileId = file.identifier else { return }
-//
-//        let query = GTLRDriveQuery_FilesGet.queryForMedia(withFileId: fileId)
-//
-//        driveService.executeQuery(query) { [weak self] (_, fileData, error) in
-//            if let error = error {
-//                print("Error downloading file: \(error)")
-//                return
-//            }
-//
-//            if let data = (fileData as? GTLRDataObject)?.data,
-//               let image = UIImage(data: data) {
-//                DispatchQueue.main.async {
-//                    self?.downloadedImage = image
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//
-//struct GoogleDriveView: View {
-//    @StateObject var vm = GoogleDriveViewModel()
-//
-//    var body: some View {
-//        VStack {
-//            if vm.isSignedIn {
-//                List(vm.driveFiles, id: \.identifier) { file in
-//                    Button(file.name ?? "Unnamed") {
-//                        vm.downloadImage(file: file)
-//                    }
-//                }
-//
-//                if let image = vm.downloadedImage {
-//                    Image(uiImage: image)
-//                        .resizable()
-//                        .scaledToFit()
-//                        .frame(height: 200)
-//                        .padding()
-//                }
-//            } else {
-//                Button("Sign in with Google") {
-//                    vm.signIn()
-//                }
-//                .padding()
-//            }
-//        }
-//    }
-//}
+struct DriveFile: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let mimeType: String
+    let webContentLink: String?
+}
+
+class GoogleDriveViewModel: ObservableObject {
+    @Published var files: [DriveFile] = []
+    @Published var isLoading = false
+    var accessToken: String = "" // <- Тут передаєш токен після Google Sign-In
+
+    func fetchFiles() {
+        isLoading = true
+        let query = "(mimeType contains 'video/') and trashed = false"
+        let fields = "files(id,name,mimeType,webContentLink)"
+        let urlString = "https://www.googleapis.com/drive/v3/files?q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&fields=\(fields)"
+
+        var request = URLRequest(url: URL(string: urlString)!)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+
+            if let data = data {
+                let decoder = JSONDecoder()
+                if let response = try? decoder.decode([String: [DriveFile]].self, from: data),
+                   let files = response["files"] {
+                    DispatchQueue.main.async {
+                        self.files = files
+                    }
+                }
+            }
+        }.resume()
+    }
+}
+
+import GoogleSignInSwift
+
+class GoogleSignInViewModel: ObservableObject {
+    @Published var accessToken: String? = nil
+    @Published var userEmail: String = ""
+
+    func signIn() {
+        guard let rootViewController = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })     // unwrap UIWindowScene
+                .flatMap({ $0.windows })                  // беремо всі вікна
+                .first(where: \.isKeyWindow)?.rootViewController else {
+            return
+        }
+
+        let config = GIDConfiguration(clientID: "945973136262-8k0s811c7ip2cn0e4pfqgb7q4b56o38s.apps.googleusercontent.com")
+        GIDSignIn.sharedInstance.configuration = config
+
+        GIDSignIn.sharedInstance.signIn(
+            withPresenting: rootViewController,
+            hint: nil,
+            additionalScopes: ["https://www.googleapis.com/auth/drive.readonly"]
+        ) { result, error in
+            if let error = error {
+                print("Google Sign-In failed: \(error)")
+                return
+            }
+
+            guard let user = result?.user else { return }
+            let token = user.accessToken.tokenString
+
+            DispatchQueue.main.async {
+                self.accessToken = token
+            }
+        }
+    }
+}
+
