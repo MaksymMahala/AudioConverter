@@ -6,8 +6,6 @@
 //
 
 import SwiftUI
-import AVFoundation
-import _AVKit_SwiftUI
 
 struct AudioToolsView: View {
     @StateObject private var viewModel = AudioConversionViewModel()
@@ -31,6 +29,9 @@ struct AudioToolsView: View {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.tools) { tool in
                     Button {
+                        withAnimation {
+                            viewModel.openAudioView = true
+                        }
                     } label: {
                         ToolCard(tool: tool)
                     }
@@ -43,6 +44,9 @@ struct AudioToolsView: View {
                 WideToolCard(tool: viewModel.bottomTool)
             }
             .padding(.horizontal)
+        }
+        .sheet(isPresented: $viewModel.openAudioView) {
+            AudioConversionSheet(viewModel: viewModel)
         }
     }
 }

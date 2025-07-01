@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct VideoToolsView: View {
+    @Binding var isLoadingVideo: Bool
     @StateObject private var viewModel = VideoToolsViewModel()
     
     private let columns = [
@@ -54,10 +55,10 @@ struct VideoToolsView: View {
             .padding(.top, 6)
         }
         .sheet(isPresented: $viewModel.openAudioView) {
-            AudioConversionSheet(viewModel: viewModel)
+            VideoConversionSheet(isLoadingVideo: $isLoadingVideo, viewModel: viewModel)
         }
         .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
-            AudioEditorView(videoURL: viewModel.videoURL, isLoading: $viewModel.isLoadingVideo)
+            VideoEditorView(videoURL: viewModel.videoURL, isLoading: $isLoadingVideo)
         }
     }
 }

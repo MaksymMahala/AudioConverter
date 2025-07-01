@@ -26,12 +26,14 @@ final class VideoToolsViewModel: ObservableObject {
     @Published var isDrivePickerPresented = false
     @Published var isDocumentPickerPresented = false
     @Published var videoURL: URL?
-    @Published var isLoadingVideo = false
     @Published var openAudioView = false
     @Published var isEditorPresented = false
     @Published var isLinkValid: Bool = false
     @Published var isCameraPresented = false
 
+    @Published var isVideoPickerPresented = false
+    @Published var errorMessage: String?
+    
     func validateLink() {
         guard let url = URL(string: inputLink),
               url.scheme?.starts(with: "http") == true else {

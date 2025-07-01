@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct AudioEditorView: View {
+struct VideoEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var playerViewModel = PlayerViewModel()
     let videoURL: URL?
@@ -39,6 +39,7 @@ struct AudioEditorView: View {
                 loadMedia()
             }
             .onAppear {
+                isLoading = false
                 loadMedia()
             }
         }
@@ -252,7 +253,6 @@ struct AudioEditorView: View {
         }
     }
     
-    // MARK: Helpers
     func controlButton(_ systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
@@ -279,5 +279,5 @@ struct AudioEditorView: View {
 }
 
 #Preview {
-    AudioEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false))
+    VideoEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false))
 }

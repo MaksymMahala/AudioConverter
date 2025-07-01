@@ -12,23 +12,33 @@ struct MenuView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
-                HeaderWithPay(title: "Convert")
-                MediaTabSelector(viewModel: tabViewModel)
-                    .padding(.top)
-                ScrollView {
-                    VStack {
-                        switch tabViewModel.selectedTab {
-                        case .video:
-                            VideoToolsView()
-                        case .audio:
-                            AudioToolsView()
-                        case .image:
-                            ImageToolsView()
+            ZStack {
+                VStack {
+                    HeaderWithPay(title: "Convert")
+                    MediaTabSelector(viewModel: tabViewModel)
+                        .padding(.top)
+                    ScrollView {
+                        VStack {
+                            switch tabViewModel.selectedTab {
+                            case .video:
+                                VideoToolsView(isLoadingVideo: $tabViewModel.isLoading)
+                            case .audio:
+                                AudioToolsView()
+                            case .image:
+                                ImageToolsView()
+                            }
                         }
+                        .padding(.bottom)
+                        .padding(.top, 16)
                     }
-                    .padding(.bottom)
-                    .padding(.top, 16)
+                }
+                
+                if tabViewModel.isLoading {
+                    Color.white.ignoresSafeArea()
+                    ProgressView("Loading…")
+                        .progressViewStyle(CircularProgressViewStyle(tint: .darkPurple))
+                        .foregroundColor(.darkPurple)
+                        .scaleEffect(1.5)
                 }
             }
             .navigationBarHidden(true)
