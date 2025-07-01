@@ -9,19 +9,20 @@ import SwiftUI
 
 struct ButtonRow: View {
     let title: String
-    let systemImage: String
+    let image: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack {
-                Image(systemName: systemImage)
+                Image(image)
                 Text(title)
                     .font(Font.custom(size: 16, weight: .medium))
                     .foregroundStyle(Color.black)
                 
                 Spacer()
                 Image(systemName: "chevron.right")
+                    .foregroundStyle(Color.gray40)
             }
             .padding()
             .padding(.vertical)

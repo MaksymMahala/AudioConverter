@@ -24,15 +24,18 @@ struct VideoConversionSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
+                            .foregroundStyle(Color.black)
                     }
                 }
                 ToolbarItem(placement: .principal) {
                     Text("Video conversion")
-                        .font(.headline)
+                        .font(Font.custom(size: 18, weight: .bold))
+                        .foregroundStyle(Color.darkBlueD90)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
+                            .foregroundStyle(Color.black)
                     }
                 }
             }
@@ -74,7 +77,7 @@ struct VideoConversionSheet: View {
     }
 
     private var content: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             linkImportSection
                 .padding()
                 .background(Color.gray.opacity(0.1))
@@ -82,7 +85,7 @@ struct VideoConversionSheet: View {
                 .padding(.horizontal)
 
             Group {
-                ButtonRow(title: "Google Drive", systemImage: "triangle") {
+                ButtonRow(title: "Google Drive", image: "iconoir_google-drive") {
                     if let token = signInViewModel.accessToken {
                         driveViewModel.accessToken = token
                         viewModel.isDrivePickerPresented = true
@@ -90,13 +93,13 @@ struct VideoConversionSheet: View {
                         signInViewModel.signIn()
                     }
                 }
-                ButtonRow(title: "Import file", systemImage: "folder") {
+                ButtonRow(title: "Import file", image: "iconoir_folder") {
                     viewModel.isDocumentPickerPresented = true
                 }
-                ButtonRow(title: "Photo library", systemImage: "photo.on.rectangle") {
+                ButtonRow(title: "Photo library", image: "iconoir_media-image_gray") {
                     viewModel.isVideoPickerPresented = true
                 }
-                ButtonRow(title: "Take a photo", systemImage: "camera") {
+                ButtonRow(title: "Take a photo", image: "iconoir_camera") {
                     viewModel.isCameraPresented = true
                 }
             }
@@ -108,11 +111,16 @@ struct VideoConversionSheet: View {
 
     private var linkImportSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Import from the link")
-                .font(.headline)
+            HStack {
+                Image(.iconoirLink)
+                Text("Import from the link")
+            }
+            .font(Font.custom(size: 16, weight: .bold))
+            .foregroundStyle(Color.black)
 
             TextField("Add link", text: $viewModel.inputLink)
                 .padding()
+                .font(Font.custom(size: 16, weight: .regular))
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(8)
                 .keyboardType(.URL)
@@ -121,11 +129,12 @@ struct VideoConversionSheet: View {
                 viewModel.validateLink()
             }) {
                 Text("Add")
+                    .font(Font.custom(size: 16, weight: .regular))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.purple)
-                    .cornerRadius(10)
+                    .background(Color.darkPurple)
+                    .cornerRadius(20)
             }
         }
     }

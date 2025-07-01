@@ -58,7 +58,7 @@ struct VideoToolsView: View {
             VideoConversionSheet(isLoadingVideo: $isLoadingVideo, viewModel: viewModel)
         }
         .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
-            VideoEditorView(videoURL: viewModel.videoURL, isLoading: $isLoadingVideo)
+            VideoEditorView(videoURL: viewModel.videoURL, isLoading: $isLoadingVideo, isEditorPresented: $viewModel.isEditorPresented)
         }
     }
 }

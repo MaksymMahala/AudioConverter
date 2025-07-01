@@ -9,6 +9,7 @@ import Foundation
 
 class WorksViewModel: ObservableObject {
     @Published var savedFiles: [SavedFileEntity] = []
+    @Published var selectedTab = "Video"
 
     init() {
         loadSavedFiles()

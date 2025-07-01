@@ -23,15 +23,18 @@ struct AudioConversionSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
+                            .foregroundStyle(Color.black)
                     }
                 }
                 ToolbarItem(placement: .principal) {
                     Text("Audio conversion")
-                        .font(.headline)
+                        .font(Font.custom(size: 18, weight: .bold))
+                        .foregroundStyle(Color.darkBlueD90)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
+                            .foregroundStyle(Color.black)
                     }
                 }
             }
@@ -47,9 +50,9 @@ struct AudioConversionSheet: View {
     }
 
     private var content: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             Group {
-                ButtonRow(title: "Google Drive", systemImage: "triangle") {
+                ButtonRow(title: "Google Drive", image: "iconoir_google-drive") {
                     if let token = signInViewModel.accessToken {
                         driveViewModel.accessToken = token
                         viewModel.isDrivePickerPresented = true
@@ -57,7 +60,7 @@ struct AudioConversionSheet: View {
                         signInViewModel.signIn()
                     }
                 }
-                ButtonRow(title: "Import file", systemImage: "folder") {
+                ButtonRow(title: "Import file", image: "iconoir_folder") {
                     viewModel.isDocumentPickerPresented = true
                 }
             }

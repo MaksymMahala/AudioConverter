@@ -34,11 +34,7 @@ struct MenuView: View {
                 }
                 
                 if tabViewModel.isLoading {
-                    Color.white.ignoresSafeArea()
-                    ProgressView("Loading…")
-                        .progressViewStyle(CircularProgressViewStyle(tint: .darkPurple))
-                        .foregroundColor(.darkPurple)
-                        .scaleEffect(1.5)
+                    CustomLoadingView()
                 }
             }
             .navigationBarHidden(true)

@@ -12,7 +12,8 @@ struct ExportView: View {
     @State private var exportURL: URL?
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var playerViewModel: PlayerViewModel
-    
+    @Binding var isEditorPresented: Bool
+
     var body: some View {
         VStack(spacing: 20) {
             Rectangle()
@@ -88,8 +89,9 @@ struct ExportView: View {
                 if let videoURL = playerViewModel.audioFile?.url {
                     playerViewModel.convertAndShare(originalAudioURL: videoURL) { url in
                         if let url = url {
-                            print("successfully converting and share: \(url)")
                             playerViewModel.saveConvertedFileToDB(url: url, fileName: fileName)
+                            isEditorPresented = false
+                            dismiss()
                         } else {
                             print("Error converting or share")
                         }
@@ -130,5 +132,5 @@ struct ExportView: View {
 }
 
 #Preview {
-    ExportView(fileName: "File", playerViewModel: PlayerViewModel())
+    ExportView(fileName: "File", playerViewModel: PlayerViewModel(), isEditorPresented: .constant(false))
 }

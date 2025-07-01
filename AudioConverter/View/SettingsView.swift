@@ -59,7 +59,6 @@ struct SettingsView: View {
                 }
                 Spacer()
             }
-            .padding(.bottom)
         }
         .background(Color.white.ignoresSafeArea())
     }

@@ -12,6 +12,7 @@ struct VideoEditorView: View {
     @StateObject private var playerViewModel = PlayerViewModel()
     let videoURL: URL?
     @Binding var isLoading: Bool
+    @Binding var isEditorPresented: Bool
     
     var body: some View {
         NavigationView {
@@ -25,14 +26,6 @@ struct VideoEditorView: View {
                     conditionalContent
                     Spacer()
                     tabs
-                }
-                
-                if isLoading {
-                    Color.black.opacity(0.4).ignoresSafeArea()
-                    ProgressView("Loading…")
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .foregroundColor(.white)
-                        .scaleEffect(1.5)
                 }
             }
             .onChange(of: videoURL) { newValue, _ in
@@ -86,7 +79,7 @@ struct VideoEditorView: View {
                 if playerViewModel.selectedTab == "File format" {
                     NavigationLink {
                         if let fileName = videoURL?.lastPathComponent {
-                            ExportView(fileName: fileName, playerViewModel: playerViewModel)
+                            ExportView(fileName: fileName, playerViewModel: playerViewModel, isEditorPresented: $isEditorPresented)
                         }
                     } label: {
                         Text("Export")
@@ -279,5 +272,5 @@ struct VideoEditorView: View {
 }
 
 #Preview {
-    VideoEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false))
+    VideoEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false), isEditorPresented: .constant(true))
 }
