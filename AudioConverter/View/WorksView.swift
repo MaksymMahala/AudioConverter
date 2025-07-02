@@ -34,7 +34,7 @@ struct WorksView: View {
                     if let selectedFile = worksViewModel.selectedFile {
                         worksViewModel.deleteFile(file: selectedFile)
                     }
-                    worksViewModel.loadSavedFiles()
+                    worksViewModel.loadFiles()
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -149,9 +149,8 @@ struct WorksView: View {
             
             ForEach(worksViewModel.savedFiles, id: \.id) { file in
                 HStack {
-                    Image(systemName: "waveform")
-                        .resizable()
-                        .frame(width: 24, height: 24)
+                    Image(systemName: worksViewModel.iconNameForType(file.type))
+                        .font(Font.custom(size: 24, weight: .medium))
                         .foregroundColor(.darkPurple)
                         .padding()
                         .frame(width: 78, height: 78)

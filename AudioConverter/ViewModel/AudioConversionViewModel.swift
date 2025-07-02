@@ -24,4 +24,6 @@ final class AudioConversionViewModel: ObservableObject {
     @Published var isDocumentPickerPresented = false
     @Published var audioURL: URL?
     @Published var openAudioView = false
+    @Published var errorMessage: String?
+    @Published var isEditorPresented = false
 }

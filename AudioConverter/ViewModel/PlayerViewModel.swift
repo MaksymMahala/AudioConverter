@@ -19,7 +19,14 @@ final class PlayerViewModel: ObservableObject {
     //MARK: Formats
     @Published var selectedFormat: String = "MP3"
     @Published var selectedTab = "Editing"
-    let availableFormats = ["CAF", "MP3", "M4F", "WAV 44100"]
+    @Published var fileType: FileType = .audio
+      
+    let availableAudioFormats = ["CAF", "MP3", "M4F", "WAV 44100"]
+    let availableVideoFormats = ["MP4", "MOV", "M4V"]
+      
+    var availableFormats: [String] {
+        fileType == .audio ? availableVideoFormats : availableAudioFormats
+    }
 
     //MARK: Audio
     private let engine = AVAudioEngine()
@@ -200,8 +207,8 @@ final class PlayerViewModel: ObservableObject {
         return String(format: "%02d:%02d", minutes, seconds)
     }
     
-    func saveConvertedFileToDB(url: URL, fileName: String) {
-        CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: "audio", fileSize: fileSize(fileURL: url), duration: formatedTime(duration))
+    func saveConvertedFileToDB(url: URL, fileName: String, type: String) {
+        CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: type, fileSize: fileSize(fileURL: url), duration: formatedTime(duration))
     }
     
     func fileSize(fileURL: URL) -> UInt64 {
@@ -218,7 +225,7 @@ final class PlayerViewModel: ObservableObject {
 }
 
 extension PlayerViewModel {
-    func convertAndShare(originalAudioURL: URL, completion: @escaping (URL?) -> Void) {
+    func convertToAudio(originalAudioURL: URL, completion: @escaping (URL?) -> Void) {
         let ext: String
         let preset: String
 
@@ -230,8 +237,20 @@ extension PlayerViewModel {
             ext = "m4a"
             preset = AVAssetExportPresetAppleM4A
         case "WAV 44100":
-            ext = "wav"
-            preset = AVAssetExportPresetPassthrough
+            let ext = "wav"
+            let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
+
+            VideoAudioConverter.convertToWAV(inputURL: originalAudioURL, outputURL: outputURL) { success in
+                DispatchQueue.main.async {
+                    if success {
+                        completion(outputURL)
+                    } else {
+                        print("WAV export failed")
+                        completion(nil)
+                    }
+                }
+            }
+            return
         case "MP3":
             exportMP3(from: originalAudioURL) { mp3URL in
                 if let mp3URL = mp3URL {

@@ -87,14 +87,14 @@ struct VideoConversionSheet: View {
         }
         .alert("Unable to Upload File", isPresented: Binding<Bool>(
             get: { viewModel.errorMessage != nil },
-               set: { newValue in
-                   if !newValue { viewModel.errorMessage = nil }
-               }
-           )) {
-               Button("OK", role: .cancel) {}
-           } message: {
-               Text(viewModel.errorMessage ?? "")
-           }
+            set: { newValue in
+                if !newValue { viewModel.errorMessage = nil }
+            }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
 
     private var content: some View {

@@ -1,5 +1,5 @@
 //
-//  AudioEditorView.swift
+//  VideoToAudioEditorView.swift
 //  AudioConverter
 //
 //  Created by Max on 01.07.2025.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct VideoEditorView: View {
+struct VideoToAudioEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var playerViewModel = PlayerViewModel()
     let videoURL: URL?
@@ -32,6 +32,7 @@ struct VideoEditorView: View {
                 loadMedia()
             }
             .onAppear {
+                playerViewModel.fileType = .video
                 isLoading = false
                 loadMedia()
             }
@@ -78,9 +79,7 @@ struct VideoEditorView: View {
                 Spacer()
                 if playerViewModel.selectedTab == "File format" {
                     NavigationLink {
-                        if let fileName = videoURL?.lastPathComponent {
-                            ExportView(fileName: fileName, playerViewModel: playerViewModel, isEditorPresented: $isEditorPresented)
-                        }
+                        ExportVideoToAudioView(playerViewModel: playerViewModel, isEditorPresented: $isEditorPresented)
                     } label: {
                         Text("Export")
                             .foregroundColor(.black)
@@ -272,5 +271,5 @@ struct VideoEditorView: View {
 }
 
 #Preview {
-    VideoEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false), isEditorPresented: .constant(true))
+    VideoToAudioEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false), isEditorPresented: .constant(true))
 }

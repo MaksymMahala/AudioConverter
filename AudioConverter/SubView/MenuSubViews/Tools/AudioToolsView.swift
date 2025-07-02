@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AudioToolsView: View {
     @StateObject private var viewModel = AudioConversionViewModel()
+    @Binding var isLoadingAudio: Bool
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -46,7 +47,10 @@ struct AudioToolsView: View {
             .padding(.horizontal)
         }
         .sheet(isPresented: $viewModel.openAudioView) {
-            AudioConversionSheet(viewModel: viewModel)
+            AudioConversionSheet(viewModel: viewModel, isLoadingAudio: $isLoadingAudio)
+        }
+        .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
+            AudioToVideoEditorView(audioURL: viewModel.audioURL, isLoading: $isLoadingAudio, isEditorPresented: $viewModel.isEditorPresented)
         }
     }
 }

@@ -68,4 +68,15 @@ final class CoreDataManager {
         context.delete(file)
         saveContext()
     }
+    
+    func fetchFiles(ofType type: String) -> [SavedFileEntity] {
+        let request: NSFetchRequest<SavedFileEntity> = SavedFileEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "type ==[c] %@", type)
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Fetch error: \(error)")
+            return []
+        }
+    }
 }

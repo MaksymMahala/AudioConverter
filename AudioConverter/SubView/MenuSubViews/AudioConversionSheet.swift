@@ -10,6 +10,8 @@ import SwiftUI
 struct AudioConversionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: AudioConversionViewModel
+    @Binding var isLoadingAudio: Bool
+    
     @StateObject private var driveViewModel = GoogleDriveViewModel()
     @StateObject private var signInViewModel = GoogleSignInViewModel()
 
@@ -43,6 +45,30 @@ struct AudioConversionSheet: View {
             DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
                 viewModel.audioURL = selectedURL
             }
+        }
+        .sheet(isPresented: $viewModel.isDocumentPickerPresented) {
+            AudioDocumentPicker(
+                audioURL: $viewModel.audioURL,
+                isPresented: $viewModel.isDocumentPickerPresented,
+                errorMessage: $viewModel.errorMessage,
+                onStartLoading: {
+                    dismiss()
+                    isLoadingAudio = true
+                },
+                onPicked: {
+                    viewModel.isEditorPresented = true
+                }
+            )
+        }
+        .alert("Unable to Upload File", isPresented: Binding<Bool>(
+            get: { viewModel.errorMessage != nil },
+            set: { newValue in
+                if !newValue { viewModel.errorMessage = nil }
+            }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
     }
 

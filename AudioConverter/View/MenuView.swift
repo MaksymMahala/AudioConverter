@@ -23,7 +23,7 @@ struct MenuView: View {
                             case .video:
                                 VideoToolsView(isLoadingVideo: $tabViewModel.isLoading)
                             case .audio:
-                                AudioToolsView()
+                                AudioToolsView(isLoadingAudio: $tabViewModel.isLoading)
                             case .image:
                                 ImageToolsView()
                             }
