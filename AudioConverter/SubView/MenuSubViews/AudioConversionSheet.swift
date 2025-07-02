@@ -39,9 +39,6 @@ struct AudioConversionSheet: View {
                 }
             }
         }
-        .sheet(isPresented: $viewModel.isDocumentPickerPresented) {
-            DocumentPicker(videoURL: $viewModel.audioURL)
-        }
         .sheet(isPresented: $viewModel.isDrivePickerPresented) {
             DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
                 viewModel.audioURL = selectedURL

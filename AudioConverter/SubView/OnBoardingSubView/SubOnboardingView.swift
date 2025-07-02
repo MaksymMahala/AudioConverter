@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SubOnboardingView: View {
-    @Binding var showOnboarding: Bool
     @Binding var selectedViewIndex: Int
     var title: String
     var subTitle: String
@@ -20,7 +19,9 @@ struct SubOnboardingView: View {
             HStack {
                 Button {
                     withAnimation {
-                        showOnboarding = false
+                        if selectedViewIndex != 0 {
+                            selectedViewIndex -= 1
+                        }
                     }
                 } label: {
                     Image(.iconoirXmark)
@@ -84,5 +85,5 @@ struct SubOnboardingView: View {
 }
 
 #Preview {
-    SubOnboardingView(showOnboarding: .constant(false), selectedViewIndex: .constant(0), title: "Welcome to the MP3 convector app", subTitle: "Work with audio, video, images in one app", banerImage: .bannerOnboarding01, icon: .loader1)
+    SubOnboardingView(selectedViewIndex: .constant(0), title: "Welcome to the MP3 convector app", subTitle: "Work with audio, video, images in one app", banerImage: .bannerOnboarding01, icon: .loader1)
 }

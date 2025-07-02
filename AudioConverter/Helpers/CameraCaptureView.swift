@@ -8,11 +8,14 @@
 import SwiftUI
 
 struct CameraCaptureView: UIViewControllerRepresentable {
-    @Environment(\.dismiss) private var dismiss
     @Binding var videoURL: URL?
+    @Binding var isPresented: Bool
+    @Binding var errorMessage: String?
+    var onStartLoading: () -> Void = {}
+    var onPicked: () -> Void
 
     func makeCoordinator() -> Coordinator {
-        return Coordinator(self)
+        Coordinator(self)
     }
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -34,14 +37,37 @@ struct CameraCaptureView: UIViewControllerRepresentable {
         }
 
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let url = info[.mediaURL] as? URL {
-                parent.videoURL = url
+            picker.dismiss(animated: true)
+            parent.isPresented = false
+
+            guard let url = info[.mediaURL] as? URL else { return }
+
+            DispatchQueue.main.async {
+                self.parent.onStartLoading()
             }
-            parent.dismiss()
+
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString + url.lastPathComponent)
+
+            do {
+                if FileManager.default.fileExists(atPath: tempURL.path) {
+                    try FileManager.default.removeItem(at: tempURL)
+                }
+                try FileManager.default.copyItem(at: url, to: tempURL)
+                DispatchQueue.main.async {
+                    self.parent.videoURL = tempURL
+                    self.parent.onPicked()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.parent.errorMessage = "Error copying captured video: \(error.localizedDescription)"
+                }
+            }
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
+            picker.dismiss(animated: true)
+            parent.isPresented = false
         }
     }
 }

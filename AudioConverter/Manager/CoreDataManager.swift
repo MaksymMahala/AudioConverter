@@ -52,12 +52,14 @@ final class CoreDataManager {
     }
 
     // MARK: - Add new SavedFileEntity
-    func addSavedFile(fileURL: URL, fileName: String, type: String = "audio") {
+    func addSavedFile(fileURL: URL, fileName: String, type: String = "audio", fileSize: UInt64, duration: String) {
         let savedFile = SavedFileEntity(context: context)
         savedFile.id = UUID()
         savedFile.fileURL = fileURL.absoluteString
         savedFile.fileName = fileName
         savedFile.type = type
+        savedFile.fileSizeKB = Int64(fileSize / 1024)
+        savedFile.duration = duration
         saveContext()
     }
 

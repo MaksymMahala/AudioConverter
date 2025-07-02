@@ -10,6 +10,8 @@ import Foundation
 class WorksViewModel: ObservableObject {
     @Published var savedFiles: [SavedFileEntity] = []
     @Published var selectedTab = "Video"
+    @Published var showDeleteAlert = false
+    @Published var selectedFile: SavedFileEntity?
 
     init() {
         loadSavedFiles()
@@ -17,5 +19,13 @@ class WorksViewModel: ObservableObject {
 
     func loadSavedFiles() {
         savedFiles = CoreDataManager.shared.fetchSavedFiles()
+    }
+    
+    func deleteFile(file: SavedFileEntity) {
+        CoreDataManager.shared.deleteSavedFile(file)
+    }
+    
+    func last14Characters(of name: String) -> String {
+        return String(name.suffix(14))
     }
 }

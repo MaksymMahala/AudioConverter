@@ -192,8 +192,24 @@ final class PlayerViewModel: ObservableObject {
         return String(format: "%02d:%02d", minutes, seconds)
     }
     
+    func formatedTime(_ time: Double?) -> String {
+        guard let time = time else { return "00:00" }
+        guard time.isFinite else { return "00:00" }
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
     func saveConvertedFileToDB(url: URL, fileName: String) {
-        CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: "audio")
+        CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: "audio", fileSize: fileSize(fileURL: url), duration: formatedTime(duration))
+    }
+    
+    func fileSize(fileURL: URL) -> UInt64 {
+        if let fileSize = try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? UInt64 {
+            return fileSize
+        }
+        
+        return UInt64()
     }
 
     deinit {

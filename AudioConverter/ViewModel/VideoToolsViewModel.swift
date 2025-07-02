@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 final class VideoToolsViewModel: ObservableObject {
     @Published var tools: [ToolItem] = [
@@ -34,20 +35,77 @@ final class VideoToolsViewModel: ObservableObject {
     @Published var isVideoPickerPresented = false
     @Published var errorMessage: String?
     
-    func validateLink() {
+    func validateLink(isLoadingVideo: Binding<Bool>, dismiss: @escaping () -> ()) {
         guard let url = URL(string: inputLink),
               url.scheme?.starts(with: "http") == true else {
+            print("❌ Invalid URL format")
             isLinkValid = false
             return
         }
-        
+
+        isLoadingVideo.wrappedValue = true
+
         let videoExtensions = ["mp4", "mov", "m4v"]
-        if videoExtensions.contains(url.pathExtension.lowercased()) {
-            videoURL = url
-            isLinkValid = true
-        } else {
-            videoURL = url
-            isLinkValid = true
+        let fileExtension = url.pathExtension.lowercased()
+
+        let proceedToDownload: () -> Void = {
+            VideoAudioConverter.downloadVideo(from: url) { localURL in
+                DispatchQueue.main.async {
+                    isLoadingVideo.wrappedValue = false
+                    guard let localURL = localURL else {
+                        print("❌ Failed to download video")
+                        self.isLinkValid = false
+                        return
+                    }
+
+                    self.videoURL = localURL
+                    self.isLinkValid = true
+                    self.isEditorPresented = true
+                    dismiss()
+                }
+            }
         }
+
+        if videoExtensions.contains(fileExtension) {
+            isLoadingVideo.wrappedValue =  true
+            dismiss()
+            proceedToDownload()
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error {
+                print("❌ Error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    isLoadingVideo.wrappedValue = false
+                    self.isLinkValid = false
+                }
+                return
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ No HTTP response")
+                DispatchQueue.main.async {
+                    isLoadingVideo.wrappedValue = false
+                    self.isLinkValid = false
+                }
+                return
+            }
+
+            if let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type"),
+               contentType.starts(with: "video/") {
+                proceedToDownload()
+            } else {
+                print("❌ Not a video")
+                DispatchQueue.main.async {
+                    isLoadingVideo.wrappedValue = false
+                    self.isLinkValid = false
+                }
+            }
+
+        }.resume()
     }
 }

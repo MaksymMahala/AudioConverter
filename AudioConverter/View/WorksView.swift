@@ -23,8 +23,22 @@ struct WorksView: View {
                     
                     folders
                     
-                    listSavedFiles
+                    if !worksViewModel.savedFiles.isEmpty {
+                        listSavedFiles
+                    }
                 }
+            }
+            .blur(radius: worksViewModel.showDeleteAlert ? 5 : 0)
+            .alert("Delete File", isPresented: $worksViewModel.showDeleteAlert) {
+                Button("Delete", role: .destructive) {
+                    if let selectedFile = worksViewModel.selectedFile {
+                        worksViewModel.deleteFile(file: selectedFile)
+                    }
+                    worksViewModel.loadSavedFiles()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure you want to delete this file? This action cannot be undone.")
             }
         }
     }
@@ -146,20 +160,30 @@ struct WorksView: View {
                         .padding(5)
                     
                     VStack(alignment: .leading) {
-                        Text(file.fileName ?? "Unknown")
+                        Text(worksViewModel.last14Characters(of: file.fileName ?? "Unknown"))
                             .font(Font.custom(size: 16, weight: .bold))
                             .foregroundStyle(Color.black)
                             .lineLimit(1)
-                        Text(file.type?.capitalized ?? "")
-                            .font(Font.custom(size: 14, weight: .regular))
-                            .foregroundStyle(Color.gray40)
+                        
+                        HStack(spacing: 10) {
+                            Text("\(file.fileSizeKB) KB")
+                                .font(Font.custom(size: 14, weight: .regular))
+                                .foregroundStyle(Color.gray40)
+                            
+                            Text(file.duration ?? "00:00")
+                                .font(Font.custom(size: 14, weight: .regular))
+                                .foregroundStyle(Color.gray40)
+                        }
                     }
                     .padding(.leading, 6)
                     
                     Spacer()
                     
                     Button {
-                        
+                        worksViewModel.selectedFile = file
+                        if worksViewModel.selectedFile != nil {
+                            worksViewModel.showDeleteAlert = true
+                        }
                     } label: {
                         Image("iconoir_more-horiz")
                     }

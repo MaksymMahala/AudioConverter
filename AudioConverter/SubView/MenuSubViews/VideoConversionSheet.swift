@@ -41,10 +41,31 @@ struct VideoConversionSheet: View {
             }
         }
         .sheet(isPresented: $viewModel.isDocumentPickerPresented) {
-            DocumentPicker(videoURL: $viewModel.videoURL)
+            DocumentPicker(
+                videoURL: $viewModel.videoURL,
+                isPresented: $viewModel.isDocumentPickerPresented,
+                errorMessage: $viewModel.errorMessage,
+                onStartLoading: {
+                    dismiss()
+                    isLoadingVideo = true
+                },
+                onPicked: {
+                    viewModel.isEditorPresented = true
+                }
+            )
         }
-        .fullScreenCover(isPresented: $viewModel.isCameraPresented) {
-            CameraCaptureView(videoURL: $viewModel.videoURL)
+        .sheet(isPresented: $viewModel.isCameraPresented) {
+            CameraCaptureView(
+                videoURL: $viewModel.videoURL,
+                isPresented: $viewModel.isCameraPresented,
+                errorMessage: $viewModel.errorMessage,
+                onStartLoading: {
+                    isLoadingVideo = true
+                },
+                onPicked: {
+                    viewModel.isEditorPresented = true
+                }
+            )
         }
         .sheet(isPresented: $viewModel.isDrivePickerPresented) {
             DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
@@ -126,7 +147,9 @@ struct VideoConversionSheet: View {
                 .keyboardType(.URL)
 
             Button(action: {
-                viewModel.validateLink()
+                viewModel.validateLink(isLoadingVideo: $isLoadingVideo) {
+                    dismiss()
+                }
             }) {
                 Text("Add")
                     .font(Font.custom(size: 16, weight: .regular))
