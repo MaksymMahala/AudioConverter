@@ -55,13 +55,13 @@ class GoogleSignInViewModel: ObservableObject {
 
     func signIn() {
         guard let rootViewController = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene })     // unwrap UIWindowScene
-                .flatMap({ $0.windows })                  // беремо всі вікна
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap({ $0.windows })                  
                 .first(where: \.isKeyWindow)?.rootViewController else {
             return
         }
 
-        let config = GIDConfiguration(clientID: "945973136262-8k0s811c7ip2cn0e4pfqgb7q4b56o38s.apps.googleusercontent.com")
+        let config = GIDConfiguration(clientID: "871146508232-si2g0rqquurroktc37eb6m8ri19jv9tc.apps.googleusercontent.com")
         GIDSignIn.sharedInstance.configuration = config
 
         GIDSignIn.sharedInstance.signIn(

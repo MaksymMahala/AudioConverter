@@ -7,38 +7,34 @@
 
 import SwiftUI
 
-struct AudioEditorView: View {
+struct VideoEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var playerViewModel = PlayerViewModel()
     let videoURL: URL?
     @Binding var isLoading: Bool
+    @Binding var isEditorPresented: Bool
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 16) {
-                header
-                waveformSection
-                controls
-                Divider()
-                    .padding(.top, 30)
-                effectsScroll
-                Spacer()
-                tabs
+        NavigationView {
+            ZStack {
+                VStack(spacing: 16) {
+                    header
+                    waveformSection
+                    controls
+                    Divider()
+                        .padding(.top, 30)
+                    conditionalContent
+                    Spacer()
+                    tabs
+                }
             }
-            
-            if isLoading {
-                Color.black.opacity(0.4).ignoresSafeArea()
-                ProgressView("Loading…")
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .foregroundColor(.white)
-                    .scaleEffect(1.5)
+            .onChange(of: videoURL) { newValue, _ in
+                loadMedia()
             }
-        }
-        .onChange(of: videoURL) { newValue, _ in
-            loadMedia()
-        }
-        .onAppear {
-            loadMedia()
+            .onAppear {
+                isLoading = false
+                loadMedia()
+            }
         }
     }
     
@@ -80,11 +76,25 @@ struct AudioEditorView: View {
                     Image(.iconoirXmark)
                 }
                 Spacer()
-                Button("Next") {
-                    
+                if playerViewModel.selectedTab == "File format" {
+                    NavigationLink {
+                        if let fileName = videoURL?.lastPathComponent {
+                            ExportView(fileName: fileName, playerViewModel: playerViewModel, isEditorPresented: $isEditorPresented)
+                        }
+                    } label: {
+                        Text("Export")
+                            .foregroundColor(.black)
+                            .font(Font.custom(size: 16, weight: .bold))
+                    }
+                } else {
+                    Button("Next") {
+                        withAnimation {
+                            playerViewModel.selectedTab = "File format"
+                        }
+                    }
+                    .foregroundColor(.black)
+                    .font(Font.custom(size: 16, weight: .bold))
                 }
-                .foregroundColor(.black)
-                .font(Font.custom(size: 16, weight: .bold))
             }
             Text(videoURL?.lastPathComponent ?? "Audio")
                 .foregroundStyle(Color.black)
@@ -202,7 +212,40 @@ struct AudioEditorView: View {
         .padding()
     }
     
-    // MARK: Helpers
+    private var conditionalContent: some View {
+        Group {
+            if playerViewModel.selectedTab == "Editing" {
+                effectsScroll
+            } else if playerViewModel.selectedTab == "File format" {
+                formatScroll
+            }
+        }
+    }
+    
+    private var formatScroll: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 20) {
+                ForEach(playerViewModel.availableFormats, id: \.self) { format in
+                    Button {
+                        playerViewModel.selectedFormat = format
+                    } label: {
+                        Text(format)
+                            .font(Font.custom(size: 16, weight: .medium))
+                            .foregroundColor(.darkBlueD90)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .frame(height: 78)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(playerViewModel.selectedFormat == format ? Color.blue.opacity(0.15) : Color.gray.opacity(0.1))
+                            )
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
     func controlButton(_ systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
@@ -229,5 +272,5 @@ struct AudioEditorView: View {
 }
 
 #Preview {
-    AudioEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false))
+    VideoEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false), isEditorPresented: .constant(true))
 }

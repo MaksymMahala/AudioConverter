@@ -13,6 +13,8 @@ struct VideoPicker: UIViewControllerRepresentable {
     @Binding var videoURL: URL?
     @Binding var isPresented: Bool
     @Binding var errorMessage: String?
+    var onStartLoading: () -> Void = {}
+    var onPicked: () -> Void
     
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
@@ -45,6 +47,9 @@ struct VideoPicker: UIViewControllerRepresentable {
             guard let provider = results.first?.itemProvider else { return }
 
             if provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+                DispatchQueue.main.async {
+                    self.parent.onStartLoading() // ПОЧАТОК ЗАВАНТАЖЕННЯ (show loader)
+                }
                 provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { url, error in
                     if let url = url {
                         self.copyToTempAndSet(url: url)
@@ -61,6 +66,7 @@ struct VideoPicker: UIViewControllerRepresentable {
                                     try data.write(to: tempURL)
                                     DispatchQueue.main.async {
                                         self.parent.videoURL = tempURL
+                                        self.parent.onPicked()
                                     }
                                 } catch {
                                     DispatchQueue.main.async {
@@ -77,11 +83,15 @@ struct VideoPicker: UIViewControllerRepresentable {
                 }
             }
         }
-        
+
         func copyToTempAndSet(url: URL) {
+            DispatchQueue.main.async {
+                self.parent.onStartLoading() // ПОЧАТОК ЗАВАНТАЖЕННЯ (show loader)
+            }
+
             let tempURL = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString + url.lastPathComponent)
-            
+
             do {
                 if FileManager.default.fileExists(atPath: tempURL.path) {
                     try FileManager.default.removeItem(at: tempURL)
@@ -89,9 +99,12 @@ struct VideoPicker: UIViewControllerRepresentable {
                 try FileManager.default.copyItem(at: url, to: tempURL)
                 DispatchQueue.main.async {
                     self.parent.videoURL = tempURL
+                    self.parent.onPicked()
                 }
             } catch {
-                print("Error copying video file: \(error)")
+                DispatchQueue.main.async {
+                    self.parent.errorMessage = "Error copying video file: \(error.localizedDescription)"
+                }
             }
         }
     }

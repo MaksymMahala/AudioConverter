@@ -40,4 +40,23 @@ struct VideoAudioConverter {
             completion(.failure(error))
         }
     }
+    
+    static func downloadVideo(from url: URL, completion: @escaping (URL?) -> Void) {
+        URLSession.shared.downloadTask(with: url) { tempURL, response, error in
+            if let tempURL = tempURL {
+                let destinationURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp4")
+                do {
+                    try FileManager.default.moveItem(at: tempURL, to: destinationURL)
+                    print("✅ Video downloaded to: \(destinationURL)")
+                    completion(destinationURL)
+                } catch {
+                    print("❌ Move error: \(error)")
+                    completion(nil)
+                }
+            } else {
+                print("❌ Download error: \(error?.localizedDescription ?? "Unknown error")")
+                completion(nil)
+            }
+        }.resume()
+    }
 }

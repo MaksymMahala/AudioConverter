@@ -19,4 +19,9 @@ final class AudioConversionViewModel: ObservableObject {
     ]
     
     @Published var bottomTool: ToolItem = ToolItem(title: "Edit an audio", subtitle: "", iconName: "iconoir_edit-pencil")
+    
+    @Published var isDrivePickerPresented = false
+    @Published var isDocumentPickerPresented = false
+    @Published var audioURL: URL?
+    @Published var openAudioView = false
 }
