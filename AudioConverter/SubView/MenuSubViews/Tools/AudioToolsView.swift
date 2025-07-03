@@ -30,8 +30,32 @@ struct AudioToolsView: View {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.tools) { tool in
                     Button {
-                        withAnimation {
-                            viewModel.openAudioView = true
+                        switch tool.title {
+                        case "Audio conversion":
+                            withAnimation {
+                                viewModel.openAudioView = true
+                                viewModel.audioAction = .convert
+                            }
+                        case "Create a melody":
+                            withAnimation {
+                                viewModel.audioAction = .createMelody
+                                viewModel.openAudioView = true
+                            }
+                        case "Trim audio":
+                            withAnimation {
+                                viewModel.audioAction = .trim
+                                viewModel.openAudioView = true
+                            }
+                        case "Edit audio":
+                            withAnimation {
+                                viewModel.audioAction = .convert
+                                viewModel.openAudioView = true
+                            }
+                        default:
+                            withAnimation {
+                                viewModel.audioAction = .convert
+                                viewModel.openAudioView = true
+                            }
                         }
                     } label: {
                         ToolCard(tool: tool)
@@ -39,18 +63,12 @@ struct AudioToolsView: View {
                 }
             }
             .padding(.horizontal)
-            
-            Button {
-            } label: {
-                WideToolCard(tool: viewModel.bottomTool)
-            }
-            .padding(.horizontal)
         }
         .sheet(isPresented: $viewModel.openAudioView) {
             AudioConversionSheet(viewModel: viewModel, isLoadingAudio: $isLoadingAudio)
         }
         .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
-            AudioToVideoEditorView(audioURL: viewModel.audioURL, isLoading: $isLoadingAudio, isEditorPresented: $viewModel.isEditorPresented)
+            AudioToVideoEditorView(audioURL: viewModel.audioURL, audioAction: viewModel.audioAction, isLoading: $isLoadingAudio, isEditorPresented: $viewModel.isEditorPresented)
         }
     }
 }

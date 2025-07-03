@@ -65,7 +65,7 @@ final class CoreDataManager {
         if let ext = imageFileExtension {
             savedFile.imageFileExtension = ext.lowercased()
         } else {
-            savedFile.imageFileExtension = fileURL.pathExtension.lowercased()
+            savedFile.imageFileExtension = "jpg"
         }
         
         savedFile.fileSizeKB = Int64(fileSize / 1024)

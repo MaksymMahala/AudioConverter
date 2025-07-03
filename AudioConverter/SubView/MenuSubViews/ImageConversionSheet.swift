@@ -50,7 +50,14 @@ struct ImageConversionSheet: View {
                     isLoadingImage = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.imageAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.openEditImageEditor = true
+                    case .gif:
+                        viewModel.openEditImageEditor = true
+                    }
                 }
             )
         }
@@ -65,7 +72,14 @@ struct ImageConversionSheet: View {
                     isLoadingImage = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.imageAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.openEditImageEditor = true
+                    case .gif:
+                        viewModel.openEditImageEditor = true
+                    }
                 }
             )
         }
@@ -83,7 +97,14 @@ struct ImageConversionSheet: View {
                     isLoadingImage = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.imageAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.openEditImageEditor = true
+                    case .gif:
+                        viewModel.openEditImageEditor = true
+                    }
                 }
             )
         }

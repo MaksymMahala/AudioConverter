@@ -16,6 +16,8 @@ final class PlayerViewModel: ObservableObject {
     @Published var currentTime: Double = 0
     @Published var isPlaying: Bool = false
     @Published var duration: Double?
+    @Published var timeRangeStart: Double = 0
+    @Published var timeRangeEnd: Double = 5
     @Published var currentEffect: String? = nil
     @Published var waveform: [CGFloat] = []
     
@@ -71,6 +73,8 @@ final class PlayerViewModel: ObservableObject {
         setupAudioEngine()
 
         duration = audioFile != nil ? audioFile!.length.toSeconds(sampleRate: audioFile!.processingFormat.sampleRate) : nil
+        timeRangeStart = 0
+        timeRangeEnd = min(5.0, self.duration ?? 5.0)
         currentTime = 0
     }
 
@@ -225,6 +229,27 @@ final class PlayerViewModel: ObservableObject {
     func saveConvertedImageToDB(url: URL, fileName: String, type: String, selectedImage: UIImage?) {
         CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: type, fileSize: fileSize(fileURL: url), duration: formatedTime(duration), image: selectedImage, imageFileExtension: selectedFormat)
     }
+    
+    func saveEditedImageToDB(fileName: String, type: String, selectedImage: UIImage?) {
+        guard let image = selectedImage else {
+            print("No image to save")
+            return
+        }
+        
+        let imageData = image.jpegData(compressionQuality: 1.0)
+        let fileSizeValue = UInt64(imageData?.count ?? 0)
+        
+        CoreDataManager.shared.addSavedFile(
+            fileURL: URL(fileURLWithPath: ""),
+            fileName: fileName,
+            type: type,
+            fileSize: fileSizeValue,
+            duration: "N/A",
+            image: image,
+            imageFileExtension: selectedFormat.lowercased()
+        )
+    }
+
     
     func fileSize(fileURL: URL) -> UInt64 {
         if let fileSize = try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? UInt64 {
@@ -408,6 +433,62 @@ extension PlayerViewModel {
         default:
             print("Unsupported format: \(selectedFormat)")
             completion(nil)
+        }
+    }
+}
+
+extension PlayerViewModel {
+    func exportTrimmedAudio(from originalURL: URL, completion: @escaping (URL?) -> Void) {
+        let asset = AVAsset(url: originalURL)
+        
+        let startTime = CMTime(seconds: timeRangeStart, preferredTimescale: 600)
+        let endTime = CMTime(seconds: timeRangeEnd, preferredTimescale: 600)
+        let timeRange = CMTimeRange(start: startTime, end: endTime)
+
+        let composition = AVMutableComposition()
+        
+        guard let assetTrack = asset.tracks(withMediaType: .audio).first,
+              let compTrack = composition.addMutableTrack(withMediaType: .audio,
+                                                           preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            print("Failed to get audio track.")
+            completion(nil)
+            return
+        }
+
+        do {
+            try compTrack.insertTimeRange(timeRange, of: assetTrack, at: .zero)
+        } catch {
+            print("Failed to insert time range: \(error)")
+            completion(nil)
+            return
+        }
+
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("trimmed.m4a")
+
+        if FileManager.default.fileExists(atPath: outputURL.path) {
+            try? FileManager.default.removeItem(at: outputURL)
+        }
+
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetAppleM4A) else {
+            print("Failed to create export session.")
+            completion(nil)
+            return
+        }
+
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .m4a
+        exportSession.timeRange = CMTimeRange(start: .zero, duration: timeRange.duration)
+
+        exportSession.exportAsynchronously {
+            DispatchQueue.main.async {
+                if exportSession.status == .completed {
+                    print("Trimmed audio exported to: \(outputURL)")
+                    completion(outputURL)
+                } else {
+                    print("Export failed: \(exportSession.error?.localizedDescription ?? "Unknown error")")
+                    completion(nil)
+                }
+            }
         }
     }
 }

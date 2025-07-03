@@ -56,7 +56,14 @@ struct AudioConversionSheet: View {
                     isLoadingAudio = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.audioAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .trim:
+                        viewModel.isEditorPresented = true
+                    case .createMelody:
+                        viewModel.isEditorPresented = true
+                    }
                 }
             )
         }
