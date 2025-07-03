@@ -41,6 +41,108 @@ struct VideoAudioConverter {
         }
     }
     
+    static func convertToWAV(inputURL: URL, outputURL: URL, completion: @escaping (Bool) -> Void) {
+        let asset = AVAsset(url: inputURL)
+        
+        guard let audioTrack = asset.tracks(withMediaType: .audio).first else {
+            print("No audio track found")
+            completion(false)
+            return
+        }
+
+        guard let reader = try? AVAssetReader(asset: asset) else {
+            print("Failed to create AVAssetReader")
+            completion(false)
+            return
+        }
+
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: 44100,
+            AVNumberOfChannelsKey: 2,
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsFloatKey: false,
+            AVLinearPCMIsNonInterleaved: false
+        ]
+
+        let readerOutput = AVAssetReaderTrackOutput(track: audioTrack, outputSettings: settings)
+        
+        guard reader.canAdd(readerOutput) else {
+            print("Cannot add reader output")
+            completion(false)
+            return
+        }
+        reader.add(readerOutput)
+
+        guard let writer = try? AVAssetWriter(outputURL: outputURL, fileType: .wav) else {
+            print("Failed to create AVAssetWriter")
+            completion(false)
+            return
+        }
+
+        let writerInput = AVAssetWriterInput(mediaType: .audio, outputSettings: settings)
+        writerInput.expectsMediaDataInRealTime = false
+
+        guard writer.canAdd(writerInput) else {
+            print("Cannot add writer input")
+            completion(false)
+            return
+        }
+        writer.add(writerInput)
+
+        writer.startWriting()
+        writer.startSession(atSourceTime: .zero)
+
+        guard reader.startReading() else {
+            print("Failed to start reader: \(reader.error?.localizedDescription ?? "Unknown error")")
+            completion(false)
+            return
+        }
+
+        let processingQueue = DispatchQueue(label: "wav.convert.queue")
+
+        writerInput.requestMediaDataWhenReady(on: processingQueue) {
+            while writerInput.isReadyForMoreMediaData {
+                if reader.status == .reading {
+                    if let buffer = readerOutput.copyNextSampleBuffer() {
+                        if !writerInput.append(buffer) {
+                            print("Failed to append buffer")
+                            reader.cancelReading()
+                            writerInput.markAsFinished()
+                            writer.finishWriting {
+                                completion(false)
+                            }
+                            break
+                        }
+                    } else {
+                        writerInput.markAsFinished()
+                        writer.finishWriting {
+                            if writer.status == .completed {
+                                completion(true)
+                            } else {
+                                print("Writer error: \(writer.error?.localizedDescription ?? "unknown error")")
+                                completion(false)
+                            }
+                        }
+                        break
+                    }
+                } else {
+                    writerInput.markAsFinished()
+                    writer.finishWriting {
+                        if writer.status == .completed {
+                            completion(true)
+                        } else {
+                            print("Writer error: \(writer.error?.localizedDescription ?? "unknown error")")
+                            completion(false)
+                        }
+                    }
+                    break
+                }
+            }
+        }
+    }
+    
     static func downloadVideo(from url: URL, completion: @escaping (URL?) -> Void) {
         URLSession.shared.downloadTask(with: url) { tempURL, response, error in
             if let tempURL = tempURL {

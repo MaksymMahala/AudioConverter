@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ImageToolsView: View {
     @StateObject private var viewModel = ImageToolsViewModel()
+    @Binding var isLoadingImage: Bool
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -29,6 +30,9 @@ struct ImageToolsView: View {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.tools) { tool in
                     Button {
+                        withAnimation {
+                            viewModel.openImageView = true
+                        }
                     } label: {
                         ToolCard(tool: tool)
                     }
@@ -41,6 +45,12 @@ struct ImageToolsView: View {
                 WideToolCard(tool: viewModel.bottomTool)
             }
             .padding(.horizontal)
+        }
+        .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
+            ImageEditorView(imageURL: viewModel.imageURL, selectedImage: $viewModel.selectedImage, isLoading: $isLoadingImage, isEditorPresented: $viewModel.isEditorPresented)
+        }
+        .sheet(isPresented: $viewModel.openImageView) {
+            ImageConversionSheet(isLoadingImage: $isLoadingImage, viewModel: viewModel)
         }
     }
 }

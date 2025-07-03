@@ -1,16 +1,16 @@
 //
-//  DocumentPicker.swift
+//  AudioDocumentPicker.swift
 //  AudioConverter
 //
-//  Created by Max on 30.06.2025.
+//  Created by Max on 02.07.2025.
 //
 
 import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct DocumentPicker: UIViewControllerRepresentable {
-    @Binding var videoURL: URL?
+struct AudioDocumentPicker: UIViewControllerRepresentable {
+    @Binding var audioURL: URL?
     @Binding var isPresented: Bool
     @Binding var errorMessage: String?
     
@@ -18,7 +18,10 @@ struct DocumentPicker: UIViewControllerRepresentable {
     var onPicked: () -> Void
     
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.movie, .video], asCopy: true)
+        let picker = UIDocumentPickerViewController(
+            forOpeningContentTypes: [.audio, .mp3, .wav, .mpeg4Audio],
+            asCopy: true
+        )
         picker.delegate = context.coordinator
         picker.allowsMultipleSelection = false
         return picker
@@ -31,9 +34,9 @@ struct DocumentPicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let parent: DocumentPicker
+        let parent: AudioDocumentPicker
         
-        init(_ parent: DocumentPicker) {
+        init(_ parent: AudioDocumentPicker) {
             self.parent = parent
         }
         
@@ -56,12 +59,12 @@ struct DocumentPicker: UIViewControllerRepresentable {
                 }
                 try FileManager.default.copyItem(at: originalURL, to: tempURL)
                 DispatchQueue.main.async {
-                    self.parent.videoURL = tempURL
+                    self.parent.audioURL = tempURL
                     self.parent.onPicked()
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.parent.errorMessage = "Error copying captured video: \(error.localizedDescription)"
+                    self.parent.errorMessage = "Error copying audio file: \(error.localizedDescription)"
                 }
             }
         }

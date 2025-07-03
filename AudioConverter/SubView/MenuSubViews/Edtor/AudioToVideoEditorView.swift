@@ -1,74 +1,65 @@
 //
-//  AudioEditorView.swift
+//  AudioToVideoEditorView.swift
 //  AudioConverter
 //
-//  Created by Max on 01.07.2025.
+//  Created by Max on 02.07.2025.
 //
 
 import SwiftUI
 
-struct VideoEditorView: View {
+struct AudioToVideoEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var playerViewModel = PlayerViewModel()
-    let videoURL: URL?
+    
+    let audioURL: URL?
+
     @Binding var isLoading: Bool
     @Binding var isEditorPresented: Bool
     
     var body: some View {
         NavigationView {
-            ZStack {
-                VStack(spacing: 16) {
-                    header
-                    waveformSection
-                    controls
-                    Divider()
-                        .padding(.top, 30)
-                    conditionalContent
-                    Spacer()
-                    tabs
-                }
+            VStack(spacing: 16) {
+                header
+                waveformSection
+                controls
+                Divider()
+                    .padding(.top, 30)
+                conditionalContent
+                Spacer()
+                tabs
             }
-            .onChange(of: videoURL) { newValue, _ in
-                loadMedia()
+            .onChange(of: audioURL) { newValue, _ in
+                loadAudio()
             }
             .onAppear {
+                playerViewModel.fileType = .audio
                 isLoading = false
-                loadMedia()
+                loadAudio()
             }
         }
     }
     
-    private func loadMedia() {
-        guard let url = videoURL else { return }
+    private func loadAudio() {
+        guard let url = audioURL else { return }
         isLoading = true
         playerViewModel.waveform = []
         
-        VideoAudioConverter.extractAudio(from: url) { result in
-            switch result {
-            case .success(let audioURL):
-                DispatchQueue.main.async {
-                    self.playerViewModel.load(url: audioURL)
-                    self.playerViewModel.applyEffect(nil)
-                    Task {
-                        let samples = await AudioWaveformProvider.extractAmplitudes(from: audioURL)
-                        await MainActor.run {
-                            withAnimation(.easeInOut) {
-                                self.playerViewModel.waveform = samples
-                                self.isLoading = false
-                            }
-                        }
+        DispatchQueue.main.async {
+            playerViewModel.load(url: url)
+            playerViewModel.applyEffect(nil)
+            
+            Task {
+                let samples = await AudioWaveformProvider.extractAmplitudes(from: url)
+                await MainActor.run {
+                    withAnimation(.easeInOut) {
+                        playerViewModel.waveform = samples
+                        isLoading = false
                     }
-                }
-            case .failure(let error):
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    print("Failed to extract audio: \(error.localizedDescription)")
                 }
             }
         }
     }
     
-    // MARK: UI Components
     private var header: some View {
         VStack(alignment: .leading) {
             HStack {
@@ -78,9 +69,12 @@ struct VideoEditorView: View {
                 Spacer()
                 if playerViewModel.selectedTab == "File format" {
                     NavigationLink {
-                        if let fileName = videoURL?.lastPathComponent {
-                            ExportView(fileName: fileName, playerViewModel: playerViewModel, isEditorPresented: $isEditorPresented)
-                        }
+                        ExportAudioToVideoView(
+                            audioURL: audioURL,
+                            selectedFormat: $playerViewModel.selectedFormat,
+                            isEditorPresented: $isEditorPresented,
+                            playerViewModel: playerViewModel
+                        )
                     } label: {
                         Text("Export")
                             .foregroundColor(.black)
@@ -96,7 +90,7 @@ struct VideoEditorView: View {
                     .font(Font.custom(size: 16, weight: .bold))
                 }
             }
-            Text(videoURL?.lastPathComponent ?? "Audio")
+            Text(audioURL?.lastPathComponent ?? "Audio")
                 .foregroundStyle(Color.black)
                 .font(Font.custom(size: 16, weight: .bold))
                 .padding(.top, 10)
@@ -269,8 +263,4 @@ struct VideoEditorView: View {
                 .clipShape(Capsule())
         }
     }
-}
-
-#Preview {
-    VideoEditorView(videoURL: URL(string: "https://video.com"), isLoading: .constant(false), isEditorPresented: .constant(true))
 }

@@ -1,17 +1,16 @@
 //
-//  AudioConversionSheet.swift
+//  ImageConversionSheet.swift
 //  AudioConverter
 //
-//  Created by Max on 01.07.2025.
+//  Created by Max on 03.07.2025.
 //
 
 import SwiftUI
 
-struct AudioConversionSheet: View {
+struct ImageConversionSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: AudioConversionViewModel
-    @Binding var isLoadingAudio: Bool
-    
+    @Binding var isLoadingImage: Bool
+    @ObservedObject var viewModel: ImageToolsViewModel
     @StateObject private var driveViewModel = GoogleDriveViewModel()
     @StateObject private var signInViewModel = GoogleSignInViewModel()
 
@@ -29,7 +28,7 @@ struct AudioConversionSheet: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("Audio conversion")
+                    Text("Image conversion")
                         .font(Font.custom(size: 18, weight: .bold))
                         .foregroundStyle(Color.darkBlueD90)
                 }
@@ -41,19 +40,47 @@ struct AudioConversionSheet: View {
                 }
             }
         }
-        .sheet(isPresented: $viewModel.isDrivePickerPresented) {
-            DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
-                viewModel.audioURL = selectedURL
-            }
-        }
         .sheet(isPresented: $viewModel.isDocumentPickerPresented) {
-            AudioDocumentPicker(
-                audioURL: $viewModel.audioURL,
+            ImageDocumentPicker(
+                imageURL: $viewModel.imageURL,
                 isPresented: $viewModel.isDocumentPickerPresented,
                 errorMessage: $viewModel.errorMessage,
                 onStartLoading: {
                     dismiss()
-                    isLoadingAudio = true
+                    isLoadingImage = true
+                },
+                onPicked: {
+                    viewModel.isEditorPresented = true
+                }
+            )
+        }
+        .sheet(isPresented: $viewModel.isImagePickerPresented) {
+            ImagePicker(
+                selectedImage: $viewModel.selectedImage,
+                imageURL: $viewModel.imageURL,
+                isPresented: $viewModel.isImagePickerPresented,
+                errorMessage: $viewModel.errorMessage,
+                onStartLoading: {
+                    dismiss()
+                    isLoadingImage = true
+                },
+                onPicked: {
+                    viewModel.isEditorPresented = true
+                }
+            )
+        }
+        .sheet(isPresented: $viewModel.isDrivePickerPresented) {
+            DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
+                viewModel.imageURL = selectedURL
+            }
+        }
+        .sheet(isPresented: $viewModel.isCameraPresented) {
+            PhotoCapturePicker(
+                photoURL: $viewModel.imageURL,
+                isPresented: $viewModel.isCameraPresented,
+                errorMessage: $viewModel.errorMessage,
+                onStartLoading: {
+                    isLoadingImage = true
                 },
                 onPicked: {
                     viewModel.isEditorPresented = true
@@ -86,10 +113,20 @@ struct AudioConversionSheet: View {
                 ButtonRow(title: "Import file", image: "iconoir_folder") {
                     viewModel.isDocumentPickerPresented = true
                 }
+                ButtonRow(title: "Photo library", image: "iconoir_media-image_gray") {
+                    viewModel.isImagePickerPresented = true
+                }
+                ButtonRow(title: "Take a photo", image: "iconoir_camera") {
+                    viewModel.isCameraPresented = true
+                }
             }
             .padding(.horizontal)
 
             Spacer()
         }
     }
+}
+
+#Preview {
+    ImageConversionSheet(isLoadingImage: .constant(false), viewModel: ImageToolsViewModel())
 }

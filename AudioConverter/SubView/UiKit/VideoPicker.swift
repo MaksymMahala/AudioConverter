@@ -48,7 +48,7 @@ struct VideoPicker: UIViewControllerRepresentable {
 
             if provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
                 DispatchQueue.main.async {
-                    self.parent.onStartLoading() // ПОЧАТОК ЗАВАНТАЖЕННЯ (show loader)
+                    self.parent.onStartLoading()
                 }
                 provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { url, error in
                     if let url = url {
@@ -86,7 +86,7 @@ struct VideoPicker: UIViewControllerRepresentable {
 
         func copyToTempAndSet(url: URL) {
             DispatchQueue.main.async {
-                self.parent.onStartLoading() // ПОЧАТОК ЗАВАНТАЖЕННЯ (show loader)
+                self.parent.onStartLoading()
             }
 
             let tempURL = FileManager.default.temporaryDirectory
