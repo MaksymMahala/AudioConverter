@@ -7,12 +7,13 @@
 
 import Foundation
 import CoreData
+import UIKit
 
 final class CoreDataManager {
     static let shared = CoreDataManager()
-
+    
     let container: NSPersistentContainer
-
+    
     private init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "AudioConverterDB")
         if inMemory {
@@ -24,11 +25,11 @@ final class CoreDataManager {
             }
         }
     }
-
+    
     var context: NSManagedObjectContext {
         container.viewContext
     }
-
+    
     // MARK: - Save context
     func saveContext() {
         if context.hasChanges {
@@ -39,7 +40,7 @@ final class CoreDataManager {
             }
         }
     }
-
+    
     // MARK: - Fetch SavedFileEntity
     func fetchSavedFiles() -> [SavedFileEntity] {
         let request: NSFetchRequest<SavedFileEntity> = SavedFileEntity.fetchRequest()
@@ -50,16 +51,56 @@ final class CoreDataManager {
             return []
         }
     }
-
+    
     // MARK: - Add new SavedFileEntity
-    func addSavedFile(fileURL: URL, fileName: String, type: String = "audio", fileSize: UInt64, duration: String) {
+    func addSavedFile(fileURL: URL, fileName: String, type: String, fileSize: UInt64, duration: String, image: UIImage? = nil, imageFileExtension: String? = nil) {
         let savedFile = SavedFileEntity(context: context)
         savedFile.id = UUID()
-        savedFile.fileURL = fileURL.absoluteString
         savedFile.fileName = fileName
         savedFile.type = type
-        savedFile.fileSizeKB = Int64(fileSize / 1024)
         savedFile.duration = duration
+        savedFile.fileURL = fileURL.absoluteString
+        savedFile.fileSizeKB = Int64(fileSize / 1024)
+        
+        if let ext = imageFileExtension {
+            savedFile.imageFileExtension = ext.lowercased()
+        } else {
+            savedFile.imageFileExtension = fileURL.pathExtension.lowercased()
+        }
+        
+        savedFile.fileSizeKB = Int64(fileSize / 1024)
+        
+        if let image = image, let ext = imageFileExtension?.lowercased() {
+            switch ext {
+            case "jpg", "jpeg":
+                savedFile.imageData = image.jpegData(compressionQuality: 1.0)
+            case "png":
+                savedFile.imageData = image.pngData()
+            case "heic":
+                savedFile.imageData = image.heicData(compressionQuality: 1.0)
+            case "gif":
+                GifCoder.exportToGIF(image: image) { url in
+                    if let url = url, let data = try? Data(contentsOf: url) {
+                        savedFile.imageData = data
+                    } else {
+                        savedFile.imageData = nil
+                    }
+                }
+            case "webp":
+                WebpCoder.exportToWebP(image: image) { url in
+                    if let url = url, let data = try? Data(contentsOf: url) {
+                        savedFile.imageData = data
+                    } else {
+                        savedFile.imageData = nil
+                    }
+                }
+            default:
+                savedFile.imageData = image.jpegData(compressionQuality: 1.0)
+            }
+        } else {
+            savedFile.imageData = nil
+        }
+        
         saveContext()
     }
 

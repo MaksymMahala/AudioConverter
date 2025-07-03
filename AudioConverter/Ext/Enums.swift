@@ -10,4 +10,5 @@ import Foundation
 enum FileType {
     case audio
     case video
+    case image
 }

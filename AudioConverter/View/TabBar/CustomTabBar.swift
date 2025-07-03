@@ -11,7 +11,7 @@ struct CustomTabBar: View {
     @State private var selectedTab: Tab = .convert
 
     enum Tab {
-        case convert, files, works, settings
+        case convert, works, settings
     }
 
     var body: some View {
@@ -19,8 +19,6 @@ struct CustomTabBar: View {
             switch selectedTab {
             case .convert:
                 MenuView()
-            case .files:
-                EmptyView()
             case .works:
                 WorksView()
             case .settings:
@@ -31,7 +29,6 @@ struct CustomTabBar: View {
 
             HStack {
                 tabButton(tab: .convert, selectedImage: "refresh-icon-active", unselectedImage: "refresh-icon-unactive", title: "Convert")
-                tabButton(tab: .files, selectedImage: "folder-icon-active", unselectedImage: "folder-icon-unactive", title: "Files")
                 tabButton(tab: .works, selectedImage: "file-icon-active", unselectedImage: "file-icon-unactive", title: "Works")
                 tabButton(tab: .settings, selectedImage: "settings-icon-active", unselectedImage: "settings-icon-unactive", title: "Settings")
             }

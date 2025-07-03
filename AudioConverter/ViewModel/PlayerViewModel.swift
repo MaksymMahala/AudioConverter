@@ -8,6 +8,9 @@
 import AVFoundation
 import Combine
 import UniformTypeIdentifiers
+import PDFKit
+import ImageIO
+import CoreImage
 
 final class PlayerViewModel: ObservableObject {
     @Published var currentTime: Double = 0
@@ -23,9 +26,17 @@ final class PlayerViewModel: ObservableObject {
       
     let availableAudioFormats = ["CAF", "MP3", "M4F", "WAV 44100"]
     let availableVideoFormats = ["MP4", "MOV", "M4V"]
-      
+    let availableImageFormats = ["PDF", "JPG", "WEBP", "HEIC", "GIF"]
+    
     var availableFormats: [String] {
-        fileType == .audio ? availableVideoFormats : availableAudioFormats
+        switch fileType {
+        case .audio:
+            return availableVideoFormats
+        case .video:
+            return availableAudioFormats
+        case .image:
+            return availableImageFormats
+        }
     }
 
     //MARK: Audio
@@ -211,6 +222,10 @@ final class PlayerViewModel: ObservableObject {
         CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: type, fileSize: fileSize(fileURL: url), duration: formatedTime(duration))
     }
     
+    func saveConvertedImageToDB(url: URL, fileName: String, type: String, selectedImage: UIImage?) {
+        CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: type, fileSize: fileSize(fileURL: url), duration: formatedTime(duration), image: selectedImage, imageFileExtension: selectedFormat)
+    }
+    
     func fileSize(fileURL: URL) -> UInt64 {
         if let fileSize = try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? UInt64 {
             return fileSize
@@ -310,6 +325,89 @@ extension PlayerViewModel {
             DispatchQueue.main.async {
                 completion(success ? mp3URL : nil)
             }
+        }
+    }
+}
+
+extension PlayerViewModel {
+    func convertToImageFormat(inputURL: URL, completion: @escaping (URL?) -> Void) {
+        guard let inputImage = UIImage(contentsOfFile: inputURL.path) else {
+            print("Failed to load image from path.")
+            completion(nil)
+            return
+        }
+
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(selectedFormat.lowercased())
+
+        switch selectedFormat {
+        case "JPG":
+            guard let data = inputImage.jpegData(compressionQuality: 1.0) else {
+                completion(nil)
+                return
+            }
+            do {
+                try data.write(to: outputURL)
+                completion(outputURL)
+            } catch {
+                print("Failed to write JPG: \(error)")
+                completion(nil)
+            }
+
+        case "PDF":
+            let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: inputImage.size))
+            do {
+                try pdfRenderer.writePDF(to: outputURL) { context in
+                    context.beginPage()
+                    inputImage.draw(in: CGRect(origin: .zero, size: inputImage.size))
+                }
+                completion(outputURL)
+            } catch {
+                print("Failed to write PDF: \(error)")
+                completion(nil)
+            }
+
+        case "HEIC":
+            guard let cgImage = inputImage.cgImage else {
+                completion(nil)
+                return
+            }
+
+            let dest = CGImageDestinationCreateWithURL(outputURL as CFURL, AVFileType.heic as CFString, 1, nil)
+            if let dest = dest {
+                CGImageDestinationAddImage(dest, cgImage, nil)
+                if CGImageDestinationFinalize(dest) {
+                    completion(outputURL)
+                } else {
+                    print("Failed to finalize HEIC")
+                    completion(nil)
+                }
+            } else {
+                print("Failed to create destination for HEIC")
+                completion(nil)
+            }
+
+        case "GIF":
+            guard let imageData = inputImage.pngData() else {
+                completion(nil)
+                return
+            }
+            do {
+                try imageData.write(to: outputURL)
+                completion(outputURL)
+            } catch {
+                print("Failed to write GIF (as PNG fallback): \(error)")
+                completion(nil)
+            }
+
+        case "WEBP":
+            WebpCoder.exportToWebP(image: inputImage) { url in
+                completion(url)
+            }
+        default:
+            print("Unsupported format: \(selectedFormat)")
+            completion(nil)
         }
     }
 }

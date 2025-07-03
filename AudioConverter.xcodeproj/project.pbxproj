@@ -11,6 +11,7 @@
 		8457FE232E12F5E000704D10 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 8457FE222E12F5E000704D10 /* GoogleSignIn */; };
 		8457FE252E12F5E000704D10 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8457FE242E12F5E000704D10 /* GoogleSignInSwift */; };
 		8457FE282E12F5E900704D10 /* ApphudSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 8457FE272E12F5E900704D10 /* ApphudSDK */; };
+		84CD19E82E168636004DE3F1 /* SDWebImageWebPCoder in Frameworks */ = {isa = PBXBuildFile; productRef = 84CD19E72E168636004DE3F1 /* SDWebImageWebPCoder */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 				8457FE282E12F5E900704D10 /* ApphudSDK in Frameworks */,
 				8457FE232E12F5E000704D10 /* GoogleSignIn in Frameworks */,
 				8457FE252E12F5E000704D10 /* GoogleSignInSwift in Frameworks */,
+				84CD19E82E168636004DE3F1 /* SDWebImageWebPCoder in Frameworks */,
 				842D9A4B2E14446D001C2D02 /* lame in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -120,6 +122,7 @@
 				8457FE212E12F5E000704D10 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				8457FE262E12F5E900704D10 /* XCRemoteSwiftPackageReference "ApphudSDK" */,
 				842D9A492E14446D001C2D02 /* XCRemoteSwiftPackageReference "lame" */,
+				84CD19E62E168636004DE3F1 /* XCRemoteSwiftPackageReference "SDWebImageWebPCoder" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 84011A172E1152E70072B010 /* Products */;
@@ -403,6 +406,14 @@
 				minimumVersion = 3.6.2;
 			};
 		};
+		84CD19E62E168636004DE3F1 /* XCRemoteSwiftPackageReference "SDWebImageWebPCoder" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageWebPCoder.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.14.6;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -425,6 +436,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8457FE262E12F5E900704D10 /* XCRemoteSwiftPackageReference "ApphudSDK" */;
 			productName = ApphudSDK;
+		};
+		84CD19E72E168636004DE3F1 /* SDWebImageWebPCoder */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84CD19E62E168636004DE3F1 /* XCRemoteSwiftPackageReference "SDWebImageWebPCoder" */;
+			productName = SDWebImageWebPCoder;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

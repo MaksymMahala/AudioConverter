@@ -1,16 +1,16 @@
 //
-//  VideoConversionSheet.swift
+//  ImageConversionSheet.swift
 //  AudioConverter
 //
-//  Created by Max on 30.06.2025.
+//  Created by Max on 03.07.2025.
 //
 
 import SwiftUI
 
-struct VideoConversionSheet: View {
+struct ImageConversionSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var isLoadingVideo: Bool
-    @ObservedObject var viewModel: VideoToolsViewModel
+    @Binding var isLoadingImage: Bool
+    @ObservedObject var viewModel: ImageToolsViewModel
     @StateObject private var driveViewModel = GoogleDriveViewModel()
     @StateObject private var signInViewModel = GoogleSignInViewModel()
 
@@ -28,7 +28,7 @@ struct VideoConversionSheet: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("Video conversion")
+                    Text("Image conversion")
                         .font(Font.custom(size: 18, weight: .bold))
                         .foregroundStyle(Color.darkBlueD90)
                 }
@@ -41,26 +41,28 @@ struct VideoConversionSheet: View {
             }
         }
         .sheet(isPresented: $viewModel.isDocumentPickerPresented) {
-            VideoDocumentPicker(
-                videoURL: $viewModel.videoURL,
+            ImageDocumentPicker(
+                imageURL: $viewModel.imageURL,
                 isPresented: $viewModel.isDocumentPickerPresented,
                 errorMessage: $viewModel.errorMessage,
                 onStartLoading: {
                     dismiss()
-                    isLoadingVideo = true
+                    isLoadingImage = true
                 },
                 onPicked: {
                     viewModel.isEditorPresented = true
                 }
             )
         }
-        .sheet(isPresented: $viewModel.isCameraPresented) {
-            CameraCaptureView(
-                videoURL: $viewModel.videoURL,
-                isPresented: $viewModel.isCameraPresented,
+        .sheet(isPresented: $viewModel.isImagePickerPresented) {
+            ImagePicker(
+                selectedImage: $viewModel.selectedImage,
+                imageURL: $viewModel.imageURL,
+                isPresented: $viewModel.isImagePickerPresented,
                 errorMessage: $viewModel.errorMessage,
                 onStartLoading: {
-                    isLoadingVideo = true
+                    dismiss()
+                    isLoadingImage = true
                 },
                 onPicked: {
                     viewModel.isEditorPresented = true
@@ -69,16 +71,16 @@ struct VideoConversionSheet: View {
         }
         .sheet(isPresented: $viewModel.isDrivePickerPresented) {
             DriveFilePickerView(viewModel: driveViewModel) { selectedURL in
-                viewModel.videoURL = selectedURL
+                viewModel.imageURL = selectedURL
             }
         }
-        .sheet(isPresented: $viewModel.isVideoPickerPresented) {
-            VideoPicker(
-                videoURL: $viewModel.videoURL,
-                isPresented: $viewModel.isVideoPickerPresented,
+        .sheet(isPresented: $viewModel.isCameraPresented) {
+            PhotoCapturePicker(
+                photoURL: $viewModel.imageURL,
+                isPresented: $viewModel.isCameraPresented,
                 errorMessage: $viewModel.errorMessage,
                 onStartLoading: {
-                    isLoadingVideo = true
+                    isLoadingImage = true
                 },
                 onPicked: {
                     viewModel.isEditorPresented = true
@@ -99,12 +101,6 @@ struct VideoConversionSheet: View {
 
     private var content: some View {
         VStack(spacing: 10) {
-            linkImportSection
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(16)
-                .padding(.horizontal)
-
             Group {
                 ButtonRow(title: "Google Drive", image: "iconoir_google-drive") {
                     if let token = signInViewModel.accessToken {
@@ -118,7 +114,7 @@ struct VideoConversionSheet: View {
                     viewModel.isDocumentPickerPresented = true
                 }
                 ButtonRow(title: "Photo library", image: "iconoir_media-image_gray") {
-                    viewModel.isVideoPickerPresented = true
+                    viewModel.isImagePickerPresented = true
                 }
                 ButtonRow(title: "Take a photo", image: "iconoir_camera") {
                     viewModel.isCameraPresented = true
@@ -129,36 +125,8 @@ struct VideoConversionSheet: View {
             Spacer()
         }
     }
+}
 
-    private var linkImportSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(.iconoirLink)
-                Text("Import from the link")
-            }
-            .font(Font.custom(size: 16, weight: .bold))
-            .foregroundStyle(Color.black)
-
-            TextField("Add link", text: $viewModel.inputLink)
-                .padding()
-                .font(Font.custom(size: 16, weight: .regular))
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(8)
-                .keyboardType(.URL)
-
-            Button(action: {
-                viewModel.validateLink(isLoadingVideo: $isLoadingVideo) {
-                    dismiss()
-                }
-            }) {
-                Text("Add")
-                    .font(Font.custom(size: 16, weight: .regular))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.darkPurple)
-                    .cornerRadius(20)
-            }
-        }
-    }
+#Preview {
+    ImageConversionSheet(isLoadingImage: .constant(false), viewModel: ImageToolsViewModel())
 }

@@ -128,6 +128,8 @@ struct ExportVideoToAudioView: View {
             playerViewModel.convertToAudio(originalAudioURL: audioURL) { url in
                 if let url = url {
                     exportURL = url
+                    isEditorPresented = false
+                    dismiss()
                     print("Conversion succeeded, file: \(url)")
                 } else {
                     print("Conversion failed")

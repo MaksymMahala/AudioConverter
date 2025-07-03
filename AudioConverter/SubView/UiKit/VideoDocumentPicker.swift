@@ -1,5 +1,5 @@
 //
-//  DocumentPicker.swift
+//  VideoDocumentPicker.swift
 //  AudioConverter
 //
 //  Created by Max on 30.06.2025.
@@ -9,7 +9,7 @@ import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct DocumentPicker: UIViewControllerRepresentable {
+struct VideoDocumentPicker: UIViewControllerRepresentable {
     @Binding var videoURL: URL?
     @Binding var isPresented: Bool
     @Binding var errorMessage: String?
@@ -31,9 +31,9 @@ struct DocumentPicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let parent: DocumentPicker
+        let parent: VideoDocumentPicker
         
-        init(_ parent: DocumentPicker) {
+        init(_ parent: VideoDocumentPicker) {
             self.parent = parent
         }
         

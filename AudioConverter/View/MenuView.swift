@@ -25,7 +25,7 @@ struct MenuView: View {
                             case .audio:
                                 AudioToolsView(isLoadingAudio: $tabViewModel.isLoading)
                             case .image:
-                                ImageToolsView()
+                                ImageToolsView(isLoadingImage: $tabViewModel.isLoading)
                             }
                         }
                         .padding(.bottom)

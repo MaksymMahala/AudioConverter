@@ -5,7 +5,7 @@
 //  Created by Max on 30.06.2025.
 //
 
-import Foundation
+import SwiftUI
 
 final class ImageToolsViewModel: ObservableObject {
     @Published var tools: [ToolItem] = [
@@ -14,4 +14,14 @@ final class ImageToolsViewModel: ObservableObject {
     ]
     
     @Published var bottomTool: ToolItem = ToolItem(title: "Edit an image", subtitle: "", iconName: "iconoir_edit-pencil_purple")
+    @Published var isDrivePickerPresented = false
+    @Published var isDocumentPickerPresented = false
+    @Published var imageURL: URL?
+    @Published var openImageView = false
+    @Published var isEditorPresented = false
+    @Published var isCameraPresented = false
+    @Published var selectedImage: UIImage?
+
+    @Published var isImagePickerPresented = false
+    @Published var errorMessage: String?
 }

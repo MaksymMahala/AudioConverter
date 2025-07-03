@@ -18,17 +18,15 @@ struct AudioToVideoEditorView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                VStack(spacing: 16) {
-                    header
-                    waveformSection
-                    controls
-                    Divider()
-                        .padding(.top, 30)
-                    conditionalContent
-                    Spacer()
-                    tabs
-                }
+            VStack(spacing: 16) {
+                header
+                waveformSection
+                controls
+                Divider()
+                    .padding(.top, 30)
+                conditionalContent
+                Spacer()
+                tabs
             }
             .onChange(of: audioURL) { newValue, _ in
                 loadAudio()
