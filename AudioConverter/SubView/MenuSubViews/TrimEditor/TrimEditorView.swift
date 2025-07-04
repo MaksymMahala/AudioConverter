@@ -1,5 +1,5 @@
 //
-//  CompressEditorView.swift
+//  TrimEditorView.swift
 //  AudioConverter
 //
 //  Created by Max on 04.07.2025.
@@ -8,14 +8,14 @@
 import SwiftUI
 import AVKit
 
-struct CompressEditorView: View {
+struct TrimEditorView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel: CompressVideoEditorViewModel
+    @StateObject private var viewModel: TrimEditorViewModel
     @Binding var isLoading: Bool
     let videoURL: URL?
     
     init(isLoading: Binding<Bool>, videoURL: URL?) {
-        _viewModel = StateObject(wrappedValue: CompressVideoEditorViewModel())
+        _viewModel = StateObject(wrappedValue: TrimEditorViewModel())
         _isLoading = isLoading
         self.videoURL = videoURL
     }
@@ -33,15 +33,6 @@ struct CompressEditorView: View {
             if let videoURL = videoURL {
                 viewModel.loadVideoInfo(from: videoURL)
             }
-        }
-        .sheet(isPresented: $viewModel.openResolution) {
-            ResolutionPickerView(
-                selectedResolution: $viewModel.selectedResolution,
-                originalResolution: viewModel.selectedResolution ?? ResolutionOption(size: CGSize(width: 480, height: 720))
-            )
-        }
-        .sheet(isPresented: $viewModel.openFrameRate) {
-            FrameRateView(selectedFrameRate: $viewModel.selectedFrameRate, isVideo: true, hasProAccess: false)
         }
     }
     
@@ -71,12 +62,11 @@ struct CompressEditorView: View {
     
     @ViewBuilder
     private var video: some View {
-        if let player = viewModel.getPlayer(), let resolution = viewModel.selectedResolution {
+        if let player = viewModel.getPlayer() {
             let maxHeight: CGFloat = 320
-            let scaleFactor = maxHeight / resolution.size.height
             
             VideoPlayer(player: player)
-                .frame(width: resolution.size.width * scaleFactor, height: maxHeight)
+                .frame(height: maxHeight)
                 .cornerRadius(16)
                 .padding(.horizontal)
         } else {
@@ -120,32 +110,14 @@ struct CompressEditorView: View {
     }
     
     private var settingsSection: some View {
-        VStack(spacing: 12) {
-            settingRow(title: "Resolution", value: viewModel.selectedResolution?.value ?? "") {
-                viewModel.pausePlayer()
-                viewModel.openResolution = true
-            }
-
-            Divider()
-                .overlay(Color.gray50)
-
-            settingRow(title: "Frame rate", value: "\(viewModel.selectedFrameRate) fps") {
-                viewModel.pausePlayer()
-                viewModel.openFrameRate = true
-            }
-
-            Divider()
-                .overlay(Color.gray50)
-
-            HStack {
-                Text("Time range")
-                    .font(Font.custom(size: 16, weight: .regular))
-                    .foregroundColor(.gray50)
-                Spacer()
-                Text("\(viewModel.timeString(from: viewModel.timeRangeStart)) - \(viewModel.timeString(from: viewModel.timeRangeEnd)) \(String(format: "%.1fs", viewModel.timeRangeEnd - viewModel.timeRangeStart))")
-                    .foregroundColor(.gray50)
-                    .font(Font.custom(size: 16, weight: .regular))
-            }
+        HStack {
+            Text("Time range")
+                .font(Font.custom(size: 16, weight: .regular))
+                .foregroundColor(.gray50)
+            Spacer()
+            Text("\(viewModel.timeString(from: viewModel.timeRangeStart)) - \(viewModel.timeString(from: viewModel.timeRangeEnd)) \(String(format: "%.1fs", viewModel.timeRangeEnd - viewModel.timeRangeStart))")
+                .foregroundColor(.gray50)
+                .font(Font.custom(size: 16, weight: .regular))
         }
         .padding(.horizontal)
         .padding(.top, 40)

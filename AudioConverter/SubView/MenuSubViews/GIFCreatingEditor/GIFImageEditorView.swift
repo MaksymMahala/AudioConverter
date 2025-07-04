@@ -36,7 +36,7 @@ struct GIFImageEditorView: View {
             )
         }
         .sheet(isPresented: $viewModel.openFrameRate) {
-            FrameRateView(selectedFrameRate: $viewModel.selectedFrameRate)
+            FrameRateView(selectedFrameRate: $viewModel.selectedFrameRate, isVideo: false, hasProAccess: false)
         }
         .sheet(isPresented: $viewModel.openNumberOfCycles) {
             NumberOfCyclesView(selectedNumberOfCycles: $viewModel.selectedNumberOfCycles)

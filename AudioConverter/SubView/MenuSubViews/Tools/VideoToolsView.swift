@@ -100,5 +100,8 @@ struct VideoToolsView: View {
         .fullScreenCover(isPresented: $viewModel.isCompressEditorPresented) {
             CompressEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
         }
+        .fullScreenCover(isPresented: $viewModel.isTrimEditorPresented) {
+            TrimEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
+        }
     }
 }
