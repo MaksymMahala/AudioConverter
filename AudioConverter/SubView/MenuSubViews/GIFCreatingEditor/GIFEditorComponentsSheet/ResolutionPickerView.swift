@@ -44,7 +44,7 @@ struct ResolutionPickerView: View {
                         .foregroundColor(.gray40)
                         .padding(.horizontal)
                     
-                    ForEach(resolutions) { option in
+                    ForEach(resolutions, id: \.self) { option in
                         resolutionRow(option: option)
                     }
                 }
@@ -76,9 +76,9 @@ struct ResolutionPickerView: View {
     
     private func resolutionRow(option: ResolutionOption) -> some View {
         Button(action: {
-//            if !option.isPro {
+            if !option.isPro {
                 selectedResolution = option
-//            }
+            }
         }) {
             VStack {
                 HStack {

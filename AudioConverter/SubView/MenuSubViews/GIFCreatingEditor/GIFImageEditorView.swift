@@ -9,57 +9,42 @@ import SwiftUI
 
 struct GIFImageEditorView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel: GIFImageEditorViewModel
+    @Binding var isLoading: Bool
     
-    //resolution
-    @State private var openNumberOfCycles = false
-    @State private var openFrameRate = false
-    @State private var openResolution = false
-    @State private var selectedResolution: ResolutionOption?
-    @State private var frameRate = 15
-    @State private var numberOfCycles = "Endless looping"
-    @State private var timeRangeStart = 4.0
-    @State private var timeRangeEnd = 9.0
-    @State private var currentTime = 30.0
-    let duration = 216.0
-
-    //numberOfCycles
-    @State private var selectedNumberOfCycles: Int?
-    
-    //frameRate
-    @State private var selectedFrameRate: Int?
+    init(image: UIImage?, isLoading: Binding<Bool>) {
+        _viewModel = StateObject(wrappedValue: GIFImageEditorViewModel(image: image))
+        _isLoading = isLoading
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            
             videoPreview
-            
             timelineSlider
-                        
             settingsSection
-            
             timeRangeSlider
-            
             Spacer()
         }
         .onAppear {
-            selectedResolution = ResolutionOption(value: "480*720", isPro: false)
+            isLoading = false
         }
-        .sheet(isPresented: $openResolution) {
-            if let originalResolution = selectedResolution {
-                ResolutionPickerView(selectedResolution: $selectedResolution, originalResolution: originalResolution)
-            }
+        .sheet(isPresented: $viewModel.openResolution) {
+            ResolutionPickerView(
+                selectedResolution: $viewModel.selectedResolution,
+                originalResolution: viewModel.selectedResolution ?? ResolutionOption(size: CGSize(width: 480, height: 720))
+            )
         }
-        .sheet(isPresented: $openFrameRate) {
-            FrameRateView(selectedFrameRate: $selectedFrameRate)
+        .sheet(isPresented: $viewModel.openFrameRate) {
+            FrameRateView(selectedFrameRate: $viewModel.selectedFrameRate)
         }
-        .sheet(isPresented: $openNumberOfCycles) {
-            NumberOfCyclesView(selectedNumberOfCycles: $selectedNumberOfCycles)
+        .sheet(isPresented: $viewModel.openNumberOfCycles) {
+            NumberOfCyclesView(selectedNumberOfCycles: $viewModel.selectedNumberOfCycles)
         }
         .navigationBarHidden(true)
         .background(Color.white)
     }
-    
+
     private var header: some View {
         HStack {
             Button(action: { dismiss() }) {
@@ -72,6 +57,7 @@ struct GIFImageEditorView: View {
                 .font(Font.custom(size: 16, weight: .bold))
             Spacer()
             Button("Done") {
+                viewModel.saveEditedImageToDB(selectedImage: viewModel.image)
                 dismiss()
             }
             .font(Font.custom(size: 16, weight: .bold))
@@ -79,29 +65,34 @@ struct GIFImageEditorView: View {
         }
         .padding()
     }
-    
+
     private var videoPreview: some View {
         ZStack {
-            Rectangle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(height: 220)
-            
-            Image(systemName: "play.circle.fill")
-                .resizable()
-                .frame(width: 50, height: 50)
-                .foregroundColor(.white)
+            if let gifURL = viewModel.generatedGIFURL {
+                WebGIFView(gifURL: gifURL)
+                    .frame(height: 220)
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(height: 220)
+
+                Image(systemName: "play.circle.fill")
+                    .resizable()
+                    .frame(width: 50, height: 50)
+                    .foregroundColor(.white)
+            }
         }
     }
-    
+
     private var timelineSlider: some View {
         VStack(spacing: 4) {
-            Slider(value: $currentTime, in: 0...duration)
+            Slider(value: $viewModel.currentTime, in: 0...viewModel.duration)
                 .accentColor(Color.darkPurple)
-            
+
             HStack {
-                Text(timeString(from: currentTime))
+                Text(timeString(from: viewModel.currentTime))
                 Spacer()
-                Text(timeString(from: duration))
+                Text(timeString(from: viewModel.duration))
             }
             .foregroundStyle(Color.grayE96)
             .font(Font.custom(size: 15, weight: .regular))
@@ -109,38 +100,44 @@ struct GIFImageEditorView: View {
         }
         .padding(.top, 8)
     }
-    
+
     private var settingsSection: some View {
         VStack(spacing: 12) {
-            settingRow(title: "Resolution", value: selectedResolution?.value ?? "") {
-                openResolution = true
+            settingRow(title: "Resolution", value: viewModel.selectedResolution?.value ?? "") {
+                viewModel.openResolution = true
             }
-            
+
             Divider()
                 .overlay(Color.gray50)
-            
-            settingRow(title: "Frame rate", value: "\(frameRate) fps") {
-                openFrameRate = true
+
+            settingRow(title: "Frame rate", value: "\(viewModel.selectedFrameRate) fps") {
+                viewModel.openFrameRate = true
             }
-            
+
             Divider()
                 .overlay(Color.gray50)
-            
-            settingRow(title: "Number of cycles", value: numberOfCycles) {
-                openNumberOfCycles = true
+
+            settingRow(title: "Number of cycles", value: viewModel.numberOfCyclesText) {
+                viewModel.openNumberOfCycles = true
             }
-            
+
             Divider()
                 .overlay(Color.gray50)
-            
-            settingRow(title: "Time range", value: "\(timeString(from: timeRangeStart)) - \(timeString(from: timeRangeEnd)) \(String(format: "%.1fs", timeRangeEnd - timeRangeStart))") {
-                // TODO: Open time range editor
+
+            HStack {
+                Text("Time range")
+                    .font(Font.custom(size: 16, weight: .regular))
+                    .foregroundColor(.gray50)
+                Spacer()
+                Text("\(timeString(from: viewModel.timeRangeStart)) - \(timeString(from: viewModel.timeRangeEnd)) \(String(format: "%.1fs", viewModel.timeRangeEnd - viewModel.timeRangeStart))")
+                    .foregroundColor(.gray50)
+                    .font(Font.custom(size: 16, weight: .regular))
             }
         }
         .padding(.horizontal)
         .padding(.top, 40)
     }
-    
+
     private func settingRow(title: String, value: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack {
@@ -151,26 +148,28 @@ struct GIFImageEditorView: View {
                 Text(value)
                     .foregroundColor(.gray50)
                     .font(Font.custom(size: 16, weight: .regular))
-                
+
                 Image(systemName: "chevron.right")
                     .foregroundColor(.gray)
             }
         }
     }
-    
+
     private var timeRangeSlider: some View {
         VStack(spacing: 10) {
-            RangeSlider(minValue: $timeRangeStart, maxValue: $timeRangeEnd, range: 0...duration)
-                .frame(height: 40)
-                .padding(.horizontal)
-            
+            RangeSlider(minValue: $viewModel.timeRangeStart, maxValue: $viewModel.timeRangeEnd, range: 0...viewModel.duration, onEditingChanged: { editing in
+                viewModel.isEditingTimeRange = editing
+            })
+            .frame(height: 40)
+            .padding(.horizontal)
+
             HStack {
-                timeAdjusterControl(time: $timeRangeStart)
+                timeAdjusterControl(time: $viewModel.timeRangeStart)
                 Spacer()
-                timeAdjusterControl(time: $timeRangeEnd)
+                timeAdjusterControl(time: $viewModel.timeRangeEnd)
             }
             .padding(.horizontal, 20)
-            
+
             Divider()
                 .overlay(Color.gray50)
                 .padding()
@@ -198,7 +197,7 @@ struct GIFImageEditorView: View {
                 .cornerRadius(20)
 
             Button(action: {
-                time.wrappedValue = min(time.wrappedValue + 0.02, duration)
+                time.wrappedValue = min(time.wrappedValue + 0.02, viewModel.duration)
             }) {
                 Text("+")
                     .font(.custom(size: 23, weight: .regular))
@@ -206,15 +205,14 @@ struct GIFImageEditorView: View {
             }
         }
     }
-    
+
     private func timeString(from seconds: Double) -> String {
         let totalSeconds = Int(seconds)
         let min = totalSeconds / 60
         let sec = totalSeconds % 60
-        let ms = Int((seconds - Double(totalSeconds)) * 1000)
-        return String(format: "%02d:%02d", min, sec, ms)
+        return String(format: "%02d:%02d", min, sec)
     }
-    
+
     private func timeString3Digits(from seconds: Double) -> String {
         let totalSeconds = Int(seconds)
         let min = totalSeconds / 60
@@ -224,67 +222,6 @@ struct GIFImageEditorView: View {
     }
 }
 
-struct RangeSlider: View {
-    @Binding var minValue: Double
-    @Binding var maxValue: Double
-    let range: ClosedRange<Double>
-    
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 4)
-                
-                let trackWidth = geo.size.width
-                let rangeSpan = range.upperBound - range.lowerBound
-                
-                let lower = CGFloat((minValue - range.lowerBound) / rangeSpan) * trackWidth
-                let upper = CGFloat((maxValue - range.lowerBound) / rangeSpan) * trackWidth
-                
-                let selectedWidth = max(0, upper - lower)
-                Capsule()
-                    .fill(Color.darkPurple)
-                    .frame(width: selectedWidth, height: 4)
-                    .offset(x: lower)
-                
-                let handleSize: CGFloat = 20
-                
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: handleSize, height: handleSize)
-                    .shadow(radius: 1)
-                    .position(x: lower, y: geo.size.height / 2)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                let clampedX = min(max(value.location.x, 0), upper)
-                                let percent = clampedX / trackWidth
-                                let newValue = Double(percent) * rangeSpan + range.lowerBound
-                                minValue = min(newValue, maxValue)
-                            }
-                    )
-                
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: handleSize, height: handleSize)
-                    .shadow(radius: 1)
-                    .position(x: upper, y: geo.size.height / 2)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                let clampedX = max(min(value.location.x, trackWidth), lower)
-                                let percent = clampedX / trackWidth
-                                let newValue = Double(percent) * rangeSpan + range.lowerBound
-                                maxValue = max(newValue, minValue)
-                            }
-                    )
-            }
-            .frame(height: 40)
-        }
-    }
-}
-
 #Preview {
-    GIFImageEditorView()
+    GIFImageEditorView(image: UIImage(named: "iconoir_plus-circle-solid"), isLoading: .constant(false))
 }

@@ -27,7 +27,7 @@ struct AudioToVideoEditorView: View {
                 waveformSection
                 controls
                 
-                if audioAction == .convert {
+                if audioAction == .convert || audioAction == .edit {
                     Divider()
                         .padding(.top, 30)
                     conditionalContent
@@ -39,7 +39,7 @@ struct AudioToVideoEditorView: View {
                 
                 Spacer()
                 
-                if audioAction == .convert {
+                if audioAction == .convert || audioAction == .edit {
                     tabs
                 }
             }

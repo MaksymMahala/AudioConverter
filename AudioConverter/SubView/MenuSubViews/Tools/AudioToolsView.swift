@@ -46,10 +46,10 @@ struct AudioToolsView: View {
                                 viewModel.audioAction = .trim
                                 viewModel.openAudioView = true
                             }
-                        case "Edit audio":
+                        case "Edit Audio":
                             withAnimation {
-                                viewModel.audioAction = .convert
                                 viewModel.openAudioView = true
+                                viewModel.audioAction = .edit
                             }
                         default:
                             withAnimation {

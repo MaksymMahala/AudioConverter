@@ -9,7 +9,7 @@ import SwiftUI
 
 struct NumberOfCyclesView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var selectedNumberOfCycles: Int?
+    @Binding var selectedNumberOfCycles: Int
     
     let numberOfCycles: [Int] = [0] + Array(1...10)
 

@@ -18,7 +18,7 @@ enum ImageAction {
 }
 
 enum AudioAction {
-    case convert, trim, createMelody
+    case convert, trim, createMelody, edit
 }
 
 enum VideoAction {

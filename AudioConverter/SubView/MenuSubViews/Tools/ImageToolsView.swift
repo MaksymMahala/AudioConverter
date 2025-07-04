@@ -33,11 +33,12 @@ struct ImageToolsView: View {
                         switch tool.title {
                         case "Convert images":
                             withAnimation {
-                                viewModel.openImageView = true
                                 viewModel.imageAction = .convert
+                                viewModel.openImageView = true
                             }
                         case "Creating GIF files":
-                            print("Creating GIF files tapped")
+                            viewModel.imageAction = .gif
+                            viewModel.openImageView = true
                         default:
                             withAnimation {
                                 viewModel.imageAction = .convert
@@ -69,6 +70,9 @@ struct ImageToolsView: View {
         }
         .sheet(isPresented: $viewModel.openImageView) {
             ImageConversionSheet(isLoadingImage: $isLoadingImage, viewModel: viewModel)
+        }
+        .fullScreenCover(isPresented: $viewModel.openGIFImageEditor) {
+            GIFImageEditorView(image: viewModel.selectedImage, isLoading: $isLoadingImage)
         }
     }
 }

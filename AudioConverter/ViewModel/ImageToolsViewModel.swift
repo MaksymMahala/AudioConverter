@@ -18,6 +18,7 @@ final class ImageToolsViewModel: ObservableObject {
     @Published var isDocumentPickerPresented = false
     @Published var openImageView = false
     @Published var openEditImageEditor = false
+    @Published var openGIFImageEditor = false
     @Published var isEditorPresented = false
     @Published var isCameraPresented = false
     @Published var isImagePickerPresented = false

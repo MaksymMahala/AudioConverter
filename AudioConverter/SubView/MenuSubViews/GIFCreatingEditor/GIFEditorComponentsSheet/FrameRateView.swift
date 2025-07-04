@@ -9,7 +9,7 @@ import SwiftUI
 
 struct FrameRateView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var selectedFrameRate: Int?
+    @Binding var selectedFrameRate: Int
     
     let numberFrameRate: [Int] = Array(1...30)
 
@@ -25,9 +25,7 @@ struct FrameRateView: View {
                         .padding(.horizontal)
                         .padding(.top, 10)
                     
-                    if let selectedNumberOfCycles = selectedFrameRate {
-                        frameRateRow(option: selectedNumberOfCycles)
-                    }
+                    frameRateRow(option: selectedFrameRate)
                                         
                     Text("Setting")
                         .font(.custom(size: 16, weight: .regular))
