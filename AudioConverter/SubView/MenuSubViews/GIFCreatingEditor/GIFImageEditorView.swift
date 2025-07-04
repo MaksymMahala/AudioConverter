@@ -54,6 +54,7 @@ struct GIFImageEditorView: View {
             }
             Spacer()
             Text("Creating GIF files")
+                .foregroundStyle(Color.black)
                 .font(Font.custom(size: 16, weight: .bold))
             Spacer()
             Button("Done") {

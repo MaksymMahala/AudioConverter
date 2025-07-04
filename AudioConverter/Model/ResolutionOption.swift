@@ -44,3 +44,15 @@ struct ResolutionOption: Identifiable, Hashable {
     }
 }
 
+extension ResolutionOption {
+    var size: CGSize {
+        let components = value.split(separator: "x")
+        if components.count == 2,
+           let width = Double(components[0]),
+           let height = Double(components[1]) {
+            return CGSize(width: width, height: height)
+        }
+        return CGSize(width: 480, height: 720)
+    }
+}
+
