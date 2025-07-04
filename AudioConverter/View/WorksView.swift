@@ -28,17 +28,39 @@ struct WorksView: View {
                     }
                 }
             }
-            .blur(radius: worksViewModel.showDeleteAlert ? 5 : 0)
-            .alert("Delete File", isPresented: $worksViewModel.showDeleteAlert) {
-                Button("Delete", role: .destructive) {
-                    if let selectedFile = worksViewModel.selectedFile {
-                        worksViewModel.deleteFile(file: selectedFile)
-                    }
-                    worksViewModel.loadFiles()
+            .blur(radius: worksViewModel.alertType == .deleteFile ? 5 : 0)
+            .blur(radius: worksViewModel.alertType == .newPlaylist ? 5 : 0)
+            .sheet(isPresented: $worksViewModel.showFolderPickerSheet) {
+                ChooseFolderView(worksViewModel: worksViewModel)
+            }
+            .sheet(isPresented: $worksViewModel.showCreatePlaylistView) {
+                NewPlaylistView(worksViewModel: worksViewModel)
+            }
+            .alert(item: $worksViewModel.alertType) { alertType in
+                switch alertType {
+                case .deleteFile:
+                    return Alert(
+                        title: Text("Delete File"),
+                        message: Text("Are you sure you want to delete this file? This action cannot be undone."),
+                        primaryButton: .destructive(Text("Delete")) {
+                            if let selectedFile = worksViewModel.selectedFile {
+                                worksViewModel.deleteFile(file: selectedFile)
+                            }
+                            worksViewModel.loadFiles()
+                        },
+                        secondaryButton: .cancel()
+                    )
+                case .newPlaylist:
+                    return Alert(
+                        title: Text("New Playlist"),
+                        message: Text("This feature requires a name input, shown in a sheet."),
+                        primaryButton: .default(Text("Create")) {
+                            worksViewModel.alertType = nil
+                            worksViewModel.showCreatePlaylistView = true
+                        },
+                        secondaryButton: .cancel()
+                    )
                 }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Are you sure you want to delete this file? This action cannot be undone.")
             }
         }
     }
@@ -69,7 +91,9 @@ struct WorksView: View {
     
     private var createTab: some View {
         Button {
-            
+            withAnimation {
+                worksViewModel.alertType = .newPlaylist
+            }
         } label: {
             HStack {
                 Image(.iconoirPlusCircleSolid)
@@ -94,13 +118,13 @@ struct WorksView: View {
                 .padding(.leading, 5)
                 .padding(.vertical)
             
-            folder(image: .iconoirHeartSolid, backColor: Color.primary130, textTitle: "My Favorites", objCount: 10, action: {
+            ForEach(worksViewModel.playlists, id: \.self) { name in
+                let count = worksViewModel.getFileIDs(forPlaylist: name).count
+                let (icon, color) = worksViewModel.iconAndColor(for: name)
                 
-            })
-            
-            folder(image: .iconoirFaceId, backColor: Color.gray20, textTitle: "Hidden folder", objCount: 5, action: {
-                
-            })
+                folder(image: icon, backColor: color, textTitle: name, objCount: count, action: {
+                })
+            }
         }
         .padding()
         .frame(maxWidth: .infinity)
@@ -189,15 +213,20 @@ struct WorksView: View {
                     
                     Spacer()
                     
-                    Button {
-                        worksViewModel.selectedFile = file
-                        if worksViewModel.selectedFile != nil {
-                            worksViewModel.showDeleteAlert = true
+                    Menu {
+                        Button("Add to Folder") {
+                            worksViewModel.selectedFile = file
+                            worksViewModel.showFolderPickerSheet = true
+                        }
+                        
+                        Button("Delete", role: .destructive) {
+                            worksViewModel.selectedFile = file
+                            worksViewModel.alertType = .deleteFile
                         }
                     } label: {
                         Image("iconoir_more-horiz")
+                            .padding(.trailing, 5)
                     }
-                    .padding(.trailing, 5)
                 }
             }
         }

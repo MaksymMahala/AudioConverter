@@ -25,4 +25,17 @@ enum VideoAction {
     case convert, videoToAudio, trim, cut, compress, waterMark, setCover
 }
 
+enum WorksAlertType: Identifiable {
+    case deleteFile
+    case newPlaylist
+
+    var id: Int {
+        switch self {
+        case .deleteFile: return 0
+        case .newPlaylist: return 1
+        }
+    }
+}
+
+
 
