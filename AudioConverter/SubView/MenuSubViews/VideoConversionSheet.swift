@@ -19,6 +19,9 @@ struct VideoConversionSheet: View {
             ScrollView {
                 content
             }
+            .onDisappear {
+                viewModel.videoAction = nil
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
