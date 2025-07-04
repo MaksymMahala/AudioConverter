@@ -53,6 +53,17 @@ struct VideoConversionSheet: View {
                         Text("Delete a video")
                             .font(Font.custom(size: 18, weight: .bold))
                             .foregroundStyle(Color.darkBlueD90)
+                    case .none:
+                        switch viewModel.videoAdditionalAction {
+                        case .waterMark:
+                            Text("Add watermark")
+                                .font(Font.custom(size: 18, weight: .bold))
+                                .foregroundStyle(Color.darkBlueD90)
+                        case .setCover:
+                            Text("Set Cover")
+                                .font(Font.custom(size: 18, weight: .bold))
+                                .foregroundStyle(Color.darkBlueD90)
+                        }
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -86,6 +97,13 @@ struct VideoConversionSheet: View {
                         viewModel.isCompressEditorPresented = true
                     case .delete:
                         viewModel.isDeleteEditorPresented = true
+                    case .none:
+                        switch viewModel.videoAdditionalAction {
+                        case .waterMark:
+                            viewModel.isAddWatermarkEditorPresented = true
+                        case .setCover:
+                            viewModel.isSetCoverEditorPresented = true
+                        }
                     }
                 }
             )
@@ -112,6 +130,13 @@ struct VideoConversionSheet: View {
                         viewModel.isCompressEditorPresented = true
                     case .delete:
                         viewModel.isDeleteEditorPresented = true
+                    case .none:
+                        switch viewModel.videoAdditionalAction {
+                        case .waterMark:
+                            viewModel.isAddWatermarkEditorPresented = true
+                        case .setCover:
+                            viewModel.isSetCoverEditorPresented = true
+                        }
                     }
                 }
             )
@@ -143,6 +168,13 @@ struct VideoConversionSheet: View {
                         viewModel.isCompressEditorPresented = true
                     case .delete:
                         viewModel.isDeleteEditorPresented = true
+                    case .none:
+                        switch viewModel.videoAdditionalAction {
+                        case .waterMark:
+                            viewModel.isAddWatermarkEditorPresented = true
+                        case .setCover:
+                            viewModel.isSetCoverEditorPresented = true
+                        }
                     }
                 }
             )

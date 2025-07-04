@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import AVFoundation
 import AVKit
 
 struct CutVideoEditorView: View {

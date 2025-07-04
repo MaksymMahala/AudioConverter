@@ -44,7 +44,7 @@ struct TrimEditorView: View {
                     .foregroundColor(.black)
             }
             Spacer()
-            Text("Compress video")
+            Text("Trim video")
                 .foregroundStyle(Color.black)
                 .font(Font.custom(size: 16, weight: .bold))
             Spacer()
@@ -180,14 +180,6 @@ struct TrimEditorView: View {
                     .foregroundColor(.gray)
             }
         }
-    }
-    
-    private func timeString3Digits(from seconds: Double) -> String {
-        let totalSeconds = Int(seconds)
-        let min = totalSeconds / 60
-        let sec = totalSeconds % 60
-        let ms = Int((seconds - Double(totalSeconds)) * 1000)
-        return String(format: "%02d:%02d:%03d", min, sec, ms)
     }
     
     private func settingRow(title: String, value: String, action: @escaping () -> Void) -> some View {

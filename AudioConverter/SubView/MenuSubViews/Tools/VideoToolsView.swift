@@ -77,8 +77,22 @@ struct VideoToolsView: View {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.toolsHorizontal) { tool in
                     Button {
-                        withAnimation {
-                            
+                        switch tool.title {
+                        case "Add Watermark":
+                            withAnimation {
+                                viewModel.videoAdditionalAction = .waterMark
+                                viewModel.openAudioView = true
+                            }
+                        case "Set cover":
+                            withAnimation {
+                                viewModel.videoAdditionalAction = .setCover
+                                viewModel.openAudioView = true
+                            }
+                        default:
+                            withAnimation {
+                                viewModel.videoAdditionalAction = .waterMark
+                                viewModel.openAudioView = true
+                            }
                         }
                     } label: {
                         ToolCardHorizontal(tool: tool)
@@ -102,6 +116,9 @@ struct VideoToolsView: View {
         }
         .fullScreenCover(isPresented: $viewModel.isTrimEditorPresented) {
             TrimEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
+        }
+        .fullScreenCover(isPresented: $viewModel.isAddWatermarkEditorPresented) {
+            WatermarkEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
         }
     }
 }

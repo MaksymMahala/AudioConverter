@@ -25,6 +25,10 @@ enum VideoAction {
     case convert, videoToAudio, trim, cut, compress, delete
 }
 
+enum VideoAdditionalAction {
+    case waterMark, setCover
+}
+
 enum WorksAlertType: Identifiable {
     case deleteFile
     case newPlaylist
