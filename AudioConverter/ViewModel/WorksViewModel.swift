@@ -22,6 +22,8 @@ class WorksViewModel: ObservableObject {
         }
     }
     
+    private let defaultsManager = UserDefaultsManager.shared
+
     init() {
         loadFiles()
         loadPlaylists()
@@ -30,15 +32,15 @@ class WorksViewModel: ObservableObject {
     func loadFiles() {
         savedFiles = CoreDataManager.shared.fetchFiles(ofType: selectedTab)
     }
-    
+
     func deleteFile(file: SavedFileEntity) {
         CoreDataManager.shared.deleteSavedFile(file)
     }
-    
+
     func last14Characters(of name: String) -> String {
         return String(name.suffix(14))
     }
-    
+
     func iconNameForType(_ type: String?) -> String {
         switch type {
         case "Video": return "video.fill"
@@ -47,66 +49,37 @@ class WorksViewModel: ObservableObject {
         default: return "doc"
         }
     }
-    
+
     func createNewPlaylist() {
         let trimmed = newPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        
-        let defaultCount = 2
+
+        let defaultCount = defaultsManager.defaultPlaylists.count
         playlists.insert(trimmed, at: min(defaultCount, playlists.count))
-        
-        savePlaylists()
+        defaultsManager.savePlaylists(playlists)
+
         newPlaylistName = ""
     }
 
-    private func savePlaylists() {
-        UserDefaults.standard.set(playlists, forKey: "SavedPlaylists")
-    }
-
     func loadPlaylists() {
-        var loaded = UserDefaults.standard.stringArray(forKey: "SavedPlaylists") ?? []
-        
-        let defaults = ["My Favorites", "Hidden folder"]
-        for defaultName in defaults {
-            if !loaded.contains(defaultName) {
-                loaded.insert(defaultName, at: 0)
-            }
-        }
-
-        playlists = loaded
+        playlists = defaultsManager.loadPlaylists()
     }
-    
+
     func addFile(_ file: SavedFileEntity, toPlaylist playlistName: String) {
-        let defaults = UserDefaults.standard
-        let fileID = file.id?.uuidString ?? UUID().uuidString
-
-        var playlists = defaults.dictionary(forKey: "playlistsMapping") as? [String: [String]] ?? [:]
-
-        var filesInPlaylist = playlists[playlistName] ?? []
-        if !filesInPlaylist.contains(fileID) {
-            filesInPlaylist.append(fileID)
-        }
-
-        playlists[playlistName] = filesInPlaylist
-        defaults.set(playlists, forKey: "playlistsMapping")
-
+        let id = file.id?.uuidString ?? UUID().uuidString
+        defaultsManager.addFile(id: id, to: playlistName)
         print("Added \(file.fileName ?? "") to \(playlistName)")
     }
-    
+
     func getFileIDs(forPlaylist name: String) -> [String] {
-        let defaults = UserDefaults.standard
-        let playlists = defaults.dictionary(forKey: "playlistsMapping") as? [String: [String]] ?? [:]
-        return playlists[name] ?? []
+        return defaultsManager.getFileIDs(for: name)
     }
-    
+
     func iconAndColor(for playlist: String) -> (ImageResource, Color) {
         switch playlist {
-        case "My Favorites":
-            return (.iconoirHeartSolid, .primary130)
-        case "Hidden folder":
-            return (.iconoirFaceId, .gray20)
-        default:
-            return (.iconoirFolder, .gray20)
+        case "My Favorites": return (.iconoirHeartSolid, .primary130)
+        case "Hidden folder": return (.iconoirFaceId, .gray20)
+        default: return (.iconoirFolder, .gray20)
         }
     }
 }
