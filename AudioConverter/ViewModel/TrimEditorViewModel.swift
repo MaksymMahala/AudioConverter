@@ -9,6 +9,8 @@ import AVFoundation
 import Combine
 import SwiftUI
 import PhotosUI
+import CoreImage
+import CoreImage.CIFilterBuiltins
 
 class TrimEditorViewModel: ObservableObject {
     //MARK: TRIM
@@ -21,6 +23,9 @@ class TrimEditorViewModel: ObservableObject {
     @Published var endTime: Double = 5
     
     //MARK: Watermark
+    @Published var isPresentedLoading = false
+    @Published var selectedNumberWaterMarks = 0
+    @Published var isNumberOfWaterMarkView = false
     @Published var watermarkImage: UIImage? = nil
     @Published var watermarkOffset: CGSize = .zero
     @Published var dragOffset: CGSize = .zero
@@ -41,11 +46,11 @@ class TrimEditorViewModel: ObservableObject {
         }
     }
     
-    private var player: AVPlayer?
+    var player: AVPlayer?
     private var playerItem: AVPlayerItem?
     private var timeObserver: Any?
     private var cancellables = Set<AnyCancellable>()
-    private var videoURL: URL?
+    var videoURL: URL?
 
     func loadVideoInfo(from url: URL) {
         videoURL = url
@@ -74,6 +79,10 @@ class TrimEditorViewModel: ObservableObject {
     
     func pausePlayer() {
         player?.pause()
+    }
+    
+    func playPlayer() {
+        player?.play()
     }
 
     func getPlayer() -> AVPlayer? {
@@ -176,10 +185,89 @@ class TrimEditorViewModel: ObservableObject {
         }
     }
     
+    func blurAction() {
+        isPresentedLoading = true
+        guard let playerItem = player?.currentItem else {
+            print("Missing player item")
+            return
+        }
+        
+        let asset = playerItem.asset
+        
+        Task {
+            do {
+                let videoTracks = try await asset.loadTracks(withMediaType: .video)
+                guard let videoTrack = videoTracks.first else {
+                    print("No video track")
+                    isPresentedLoading = false
+                    return
+                }
+                
+                let naturalSize = try await videoTrack.load(.naturalSize)
+                let preferredTransform = try await videoTrack.load(.preferredTransform)
+                let transformedSize = naturalSize.applying(preferredTransform)
+                
+                let videoWidth = abs(transformedSize.width)
+                let videoHeight = abs(transformedSize.height)
+                
+                let watermarkWidth: CGFloat = 300
+                let watermarkHeight: CGFloat = 150
+                let spacing: CGFloat = 20
+                
+                var rects: [CGRect] = []
+                
+                for i in 0..<max(selectedNumberWaterMarks, 1) {
+                    let x = videoWidth - watermarkWidth - spacing
+                    let y = videoHeight - watermarkHeight - spacing - CGFloat(i) * (watermarkHeight + spacing)
 
+                    let rawRect = CGRect(x: x, y: y, width: watermarkWidth, height: watermarkHeight)
+                    let correctedRect = convertRectToVideoCoordinates(rect: rawRect, videoSize: CGSize(width: videoWidth, height: videoHeight), transform: preferredTransform)
+                    
+                    if correctedRect.origin.x >= 0,
+                       correctedRect.origin.y >= 0,
+                       correctedRect.maxX <= videoWidth,
+                       correctedRect.maxY <= videoHeight {
+                        rects.append(correctedRect)
+                    } else {
+                        print("⚠️ Skipping rect \(i) — out of bounds after transform")
+                    }
+                }
+                
+                exportVideoWithBlurredWatermarkAreas(watermarkRects: rects) { [weak self] outputURL in
+                    if let url = outputURL {
+                        print("✅ Blurred watermark video saved at: \(url)")
+                        DispatchQueue.main.async {
+                            guard let self = self else { return }
+                            self.loadVideoInfo(from: url)
+                            self.playPlayer()
+                            self.isPresentedLoading = false
+                        }
+                    } else {
+                        self?.isPresentedLoading = false
+                        print("❌ Failed to export video with blurred watermark(s)")
+                    }
+                }
+                
+            } catch {
+                self.isPresentedLoading = false
+                print("❌ Error loading asset data: \(error)")
+            }
+        }
+    }
+    
+    private func convertRectToVideoCoordinates(rect: CGRect, videoSize: CGSize, transform: CGAffineTransform) -> CGRect {
+        let invertedTransform = transform.inverted()
+        var transformedRect = rect.applying(invertedTransform)
+        
+        transformedRect.origin.y = videoSize.height - transformedRect.origin.y - transformedRect.height
+        
+        return transformedRect
+    }
+    
     deinit {
         if let timeObserver = timeObserver {
             player?.removeTimeObserver(timeObserver)
+            self.timeObserver = nil
         }
     }
 }
@@ -190,24 +278,24 @@ extension TrimEditorViewModel {
             completion(nil)
             return
         }
-
+        
         let asset = AVAsset(url: videoURL)
         let start = CMTime(seconds: timeRangeStart, preferredTimescale: 600)
         let end = CMTime(seconds: timeRangeEnd, preferredTimescale: 600)
         let timeRange = CMTimeRange(start: start, end: end)
-
+        
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
             print("Failed to create export session")
             completion(nil)
             return
         }
-
+        
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("trimmed_\(UUID().uuidString).mp4")
-
+        
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .mp4
         exportSession.timeRange = timeRange
-
+        
         exportSession.exportAsynchronously {
             DispatchQueue.main.async {
                 if exportSession.status == .completed {
@@ -226,7 +314,7 @@ extension TrimEditorViewModel {
             completion(nil)
             return
         }
-
+        
         let asset = AVAsset(url: videoURL)
         let mixComposition = AVMutableComposition()
         
@@ -238,13 +326,12 @@ extension TrimEditorViewModel {
         let timeRange = CMTimeRange(start: .zero, duration: asset.duration)
         
         let compositionVideoTrack = mixComposition.addMutableTrack(withMediaType: .video,
-                                                                    preferredTrackID: kCMPersistentTrackID_Invalid)
+                                                                   preferredTrackID: kCMPersistentTrackID_Invalid)
         try? compositionVideoTrack?.insertTimeRange(timeRange,
                                                     of: videoTrack,
                                                     at: .zero)
         compositionVideoTrack?.preferredTransform = videoTrack.preferredTransform
         
-        // Create video layer
         let videoSize = videoTrack.naturalSize.applying(videoTrack.preferredTransform)
         let renderSize = CGSize(width: abs(videoSize.width), height: abs(videoSize.height))
         
@@ -254,7 +341,6 @@ extension TrimEditorViewModel {
         videoLayer.frame = CGRect(origin: .zero, size: renderSize)
         parentLayer.addSublayer(videoLayer)
         
-        // Add watermark layer
         let watermarkLayer = CALayer()
         watermarkLayer.contents = watermarkImage.cgImage
         watermarkLayer.frame = CGRect(x: renderSize.width / 2 + watermarkOffset.width,
@@ -263,12 +349,11 @@ extension TrimEditorViewModel {
         watermarkLayer.masksToBounds = true
         parentLayer.addSublayer(watermarkLayer)
         
-        // Add video composition
         let videoComposition = AVMutableVideoComposition()
         videoComposition.renderSize = renderSize
         videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
         videoComposition.animationTool = AVVideoCompositionCoreAnimationTool(postProcessingAsVideoLayer: videoLayer,
-                                                                              in: parentLayer)
+                                                                             in: parentLayer)
         
         let instruction = AVMutableVideoCompositionInstruction()
         instruction.timeRange = timeRange
@@ -277,7 +362,6 @@ extension TrimEditorViewModel {
         instruction.layerInstructions = [layerInstruction]
         videoComposition.instructions = [instruction]
         
-        // Export
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("watermarked_\(UUID().uuidString).mp4")
         
         guard let exportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality) else {
@@ -295,6 +379,115 @@ extension TrimEditorViewModel {
                     completion(outputURL)
                 } else {
                     print("Watermarked export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
+    private func exportVideoWithBlurredWatermarkAreas(watermarkRects: [CGRect], completion: @escaping (URL?) -> Void) {
+        guard let videoURL = videoURL else {
+            completion(nil)
+            return
+        }
+        
+        let asset = AVAsset(url: videoURL)
+        guard let videoTrack = asset.tracks(withMediaType: .video).first else {
+            completion(nil)
+            return
+        }
+        
+        let composition = AVMutableComposition()
+        guard let compositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            completion(nil)
+            return
+        }
+        
+        do {
+            try compositionTrack.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: videoTrack, at: .zero)
+        } catch {
+            print("Failed to insert time range: \(error)")
+            completion(nil)
+            return
+        }
+        
+        compositionTrack.preferredTransform = videoTrack.preferredTransform
+        
+        let videoSize = videoTrack.naturalSize.applying(videoTrack.preferredTransform)
+        let renderSize = CGSize(width: abs(videoSize.width), height: abs(videoSize.height))
+        
+        let videoComposition = AVMutableVideoComposition(asset: asset) { request in
+            let sourceImage = request.sourceImage.clampedToExtent()
+            
+            guard let blurFilter = CIFilter(name: "CIGaussianBlur") else {
+                request.finish(with: sourceImage, context: nil)
+                return
+            }
+            
+            blurFilter.setValue(sourceImage, forKey: kCIInputImageKey)
+            blurFilter.setValue(15.0, forKey: kCIInputRadiusKey)
+            
+            guard let blurredImage = blurFilter.outputImage else {
+                request.finish(with: sourceImage, context: nil)
+                return
+            }
+            
+            let extent = sourceImage.extent
+            var maskImage = CIImage(color: .clear).cropped(to: extent)
+            
+            for rect in watermarkRects {
+                // Використовуємо rect без додаткових змін, бо вони вже конвертовані
+                let ciRect = rect
+                
+                guard ciRect.origin.x >= 0,
+                      ciRect.origin.y >= 0,
+                      ciRect.maxX <= extent.width,
+                      ciRect.maxY <= extent.height else {
+                    print("⚠️ Skipping out-of-bounds rect: \(ciRect)")
+                    continue
+                }
+                
+                let whiteMask = CIImage(color: .white).cropped(to: ciRect)
+                maskImage = whiteMask.composited(over: maskImage)
+            }
+            
+            guard let blend = CIFilter(name: "CIBlendWithMask") else {
+                request.finish(with: sourceImage, context: nil)
+                return
+            }
+            
+            blend.setValue(blurredImage, forKey: kCIInputImageKey)
+            blend.setValue(sourceImage, forKey: kCIInputBackgroundImageKey)
+            blend.setValue(maskImage, forKey: kCIInputMaskImageKey)
+            
+            if let output = blend.outputImage?.cropped(to: extent) {
+                request.finish(with: output, context: nil)
+            } else {
+                request.finish(with: sourceImage, context: nil)
+            }
+        }
+        
+        videoComposition.renderSize = renderSize
+        videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
+        
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("blurred_\(UUID().uuidString).mp4")
+        
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
+            completion(nil)
+            return
+        }
+        
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .mp4
+        exportSession.videoComposition = videoComposition
+        
+        exportSession.exportAsynchronously {
+            DispatchQueue.main.async {
+                if exportSession.status == .completed {
+                    print("✅ Exported to \(outputURL)")
+                    completion(outputURL)
+                } else {
+                    print("❌ Export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
                     completion(nil)
                 }
             }

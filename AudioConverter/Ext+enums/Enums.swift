@@ -22,11 +22,7 @@ enum AudioAction {
 }
 
 enum VideoAction {
-    case convert, videoToAudio, trim, cut, compress, delete
-}
-
-enum VideoAdditionalAction {
-    case waterMark, setCover
+    case convert, videoToAudio, trim, cut, compress, delete, waterMark, setCover
 }
 
 enum WorksAlertType: Identifiable {

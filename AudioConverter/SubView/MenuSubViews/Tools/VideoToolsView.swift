@@ -80,17 +80,17 @@ struct VideoToolsView: View {
                         switch tool.title {
                         case "Add Watermark":
                             withAnimation {
-                                viewModel.videoAdditionalAction = .waterMark
+                                viewModel.videoAction = .waterMark
                                 viewModel.openAudioView = true
                             }
                         case "Set cover":
                             withAnimation {
-                                viewModel.videoAdditionalAction = .setCover
+                                viewModel.videoAction = .setCover
                                 viewModel.openAudioView = true
                             }
                         default:
                             withAnimation {
-                                viewModel.videoAdditionalAction = .waterMark
+                                viewModel.videoAction = .waterMark
                                 viewModel.openAudioView = true
                             }
                         }
@@ -119,6 +119,9 @@ struct VideoToolsView: View {
         }
         .fullScreenCover(isPresented: $viewModel.isAddWatermarkEditorPresented) {
             WatermarkEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
+        }
+        .fullScreenCover(isPresented: $viewModel.isDeleteEditorPresented) {
+            DeleteAVideoEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
         }
     }
 }

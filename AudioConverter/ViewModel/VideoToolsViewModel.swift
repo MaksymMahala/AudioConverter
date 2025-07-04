@@ -23,8 +23,7 @@ final class VideoToolsViewModel: ObservableObject {
         ToolItem(title: "Set cover", subtitle: "", iconName: "iconoir_bookmark-book")
     ]
     
-    @Published var videoAdditionalAction: VideoAdditionalAction = .waterMark
-    @Published var videoAction: VideoAction?
+    @Published var videoAction: VideoAction = .convert
     @Published var inputLink: String = ""
     @Published var isDrivePickerPresented = false
     @Published var isDocumentPickerPresented = false
@@ -82,13 +81,10 @@ final class VideoToolsViewModel: ObservableObject {
                         self.isCompressEditorPresented = true
                     case .delete:
                         self.isDeleteEditorPresented = true
-                    case .none:
-                        switch self.videoAdditionalAction {
-                        case .waterMark:
-                            self.isAddWatermarkEditorPresented = true
-                        case .setCover:
-                            self.isSetCoverEditorPresented = true
-                        }
+                    case .waterMark:
+                        self.isAddWatermarkEditorPresented = true
+                    case .setCover:
+                        self.isSetCoverEditorPresented = true
                     }
                     dismiss()
                 }

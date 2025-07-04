@@ -51,12 +51,13 @@ struct FrameRateView: View {
         HStack {
             Button(action: { dismiss() }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(Font.custom(size: 18, weight: .medium))
                     .foregroundColor(.black)
             }
             Spacer()
             Text("Frame rate")
-                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Color.black)
+                .font(Font.custom(size: 16, weight: .bold))
             Spacer()
             Button("Done") {
                 dismiss()
