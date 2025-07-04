@@ -57,7 +57,7 @@ struct CutVideoEditorView: View {
             Spacer()
             Button("Done") {
                 if let videoURL = videoURL {
-                    viewModel.saveFileToDB(url: videoURL, fileName: videoURL.absoluteString, type: "Video")
+                    viewModel.saveFileToDB(fileName: videoURL.absoluteString, type: "Video")
                     dismiss()
                 }
             }

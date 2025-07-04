@@ -1,5 +1,5 @@
 //
-//  CutVideoEditorViewModel.swift
+//  CompressViewModel.swift
 //  AudioConverter
 //
 //  Created by Max on 04.07.2025.
@@ -8,8 +8,14 @@
 import AVFoundation
 import Combine
 
-class CutVideoEditorViewModel: ObservableObject {
+class CompressVideoEditorViewModel: ObservableObject {
+    @Published var timeRangeStart: Double = 0
+    @Published var timeRangeEnd: Double = 5
+    @Published var isEditingTimeRange = false
+    
     @Published var openResolution = false
+    @Published var openFrameRate = false
+    @Published var selectedFrameRate: Int = 15
     @Published var selectedResolution: ResolutionOption? {
         didSet {
             if let url = videoURL {
@@ -101,15 +107,15 @@ class CutVideoEditorViewModel: ObservableObject {
         }
     }
     
-    private func exportTrimmedVideo(completion: @escaping (URL?) -> Void) {
+    private func exportCompressedVideo(completion: @escaping (URL?) -> Void) {
         guard let videoURL = videoURL else {
             completion(nil)
             return
         }
 
         let asset = AVAsset(url: videoURL)
-        let start = CMTime(seconds: startTime, preferredTimescale: 600)
-        let end = CMTime(seconds: endTime, preferredTimescale: 600)
+        let start = CMTime(seconds: timeRangeStart, preferredTimescale: 600)
+        let end = CMTime(seconds: timeRangeEnd, preferredTimescale: 600)
         let timeRange = CMTimeRange(start: start, end: end)
 
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
@@ -138,23 +144,32 @@ class CutVideoEditorViewModel: ObservableObject {
     }
     
     func saveFileToDB(fileName: String, type: String) {
-        exportTrimmedVideo { outputURL in
-            guard let outputURL = outputURL else { return }
-            
-            let durationSeconds = self.endTime - self.startTime
-            
-            CoreDataManager.shared.addSavedFile(
-                fileURL: outputURL,
-                fileName: fileName,
-                type: type,
-                fileSize: self.fileSize(fileURL: outputURL),
-                duration: self.formatTime(durationSeconds)
-            )
+        let start = CMTime(seconds: timeRangeStart, preferredTimescale: 600)
+        let end = CMTime(seconds: timeRangeEnd, preferredTimescale: 600)
+        let durationSeconds = CMTimeGetSeconds(end) - CMTimeGetSeconds(start)
+        
+        exportCompressedVideo { outputURL in
+            if let outputURL = outputURL {
+                CoreDataManager.shared.addSavedFile(
+                    fileURL: outputURL,
+                    fileName: fileName,
+                    type: type,
+                    fileSize: self.fileSize(fileURL: outputURL),
+                    duration: self.formatTime(durationSeconds)
+                )
+            }
         }
     }
     
     func fileSize(fileURL: URL) -> UInt64 {
         return (try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? UInt64) ?? 0
+    }
+    
+    func timeString(from seconds: Double) -> String {
+        let totalSeconds = Int(seconds)
+        let minutes = totalSeconds / 60
+        let remainingSeconds = totalSeconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 
     deinit {
@@ -163,3 +178,37 @@ class CutVideoEditorViewModel: ObservableObject {
         }
     }
 }
+
+extension CompressVideoEditorViewModel {
+
+    func decreaseStartTime(by delta: Double = 0.02) {
+        let newValue = max(startTime - delta, 0)
+        if newValue < endTime {
+            startTime = newValue
+            seek(to: newValue)
+        }
+    }
+    
+    func increaseStartTime(by delta: Double = 0.02) {
+        let newValue = min(startTime + delta, endTime)
+        if newValue < endTime {
+            startTime = newValue
+            seek(to: newValue)
+        }
+    }
+    
+    func decreaseEndTime(by delta: Double = 0.02) {
+        let newValue = max(endTime - delta, startTime)
+        if newValue > startTime {
+            endTime = newValue
+        }
+    }
+    
+    func increaseEndTime(by delta: Double = 0.02) {
+        let newValue = min(endTime + delta, duration)
+        if newValue > startTime {
+            endTime = newValue
+        }
+    }
+}
+
