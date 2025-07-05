@@ -61,7 +61,7 @@ class GoogleSignInViewModel: ObservableObject {
             return
         }
 
-        let config = GIDConfiguration(clientID: "871146508232-si2g0rqquurroktc37eb6m8ri19jv9tc.apps.googleusercontent.com")
+        let config = GIDConfiguration(clientID: Constants.clientID)
         GIDSignIn.sharedInstance.configuration = config
 
         GIDSignIn.sharedInstance.signIn(
