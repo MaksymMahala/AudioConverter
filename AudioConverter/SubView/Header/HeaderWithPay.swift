@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HeaderWithPay: View {
     var title: String
+    var action: () -> ()
     var body: some View {
         HStack {
             Text(title)
@@ -18,7 +19,7 @@ struct HeaderWithPay: View {
             Spacer()
             
             Button {
-                
+                action()
             } label: {
                 HStack {
                     Image(.premiumIcon)
@@ -39,5 +40,5 @@ struct HeaderWithPay: View {
 }
 
 #Preview {
-    HeaderWithPay(title: "Convert")
+    HeaderWithPay(title: "Convert", action: {})
 }

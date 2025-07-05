@@ -12,9 +12,9 @@ struct WorksView: View {
     var body: some View {
         NavigationView {
             VStack {
-                Text("Works")
-                    .foregroundStyle(Color.black)
-                    .font(Font.custom(size: 20, weight: .bold))
+                HeaderWithPay(title: "Works") {
+                    worksViewModel.showSubsView = true
+                }
                 
                 ScrollView(showsIndicators: false) {
                     tabs
@@ -27,6 +27,9 @@ struct WorksView: View {
                         listSavedFiles
                     }
                 }
+            }
+            .fullScreenCover(isPresented: $worksViewModel.showSubsView) {
+                SubsView()
             }
             .blur(radius: worksViewModel.alertType == .deleteFile ? 5 : 0)
             .blur(radius: worksViewModel.alertType == .newPlaylist ? 5 : 0)

@@ -16,6 +16,7 @@ class WorksViewModel: ObservableObject {
     @Published var newPlaylistName: String = ""
     @Published var playlists: [String] = []
     @Published var showFolderPickerSheet: Bool = false
+    @Published var showSubsView: Bool = false
     @Published var selectedTab: String = "Video" {
         didSet {
             loadFiles()

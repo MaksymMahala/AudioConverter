@@ -24,4 +24,5 @@ final class SettingsViewModel: ObservableObject {
         SettingsOption(icon: "iconoir_thumbs-up", title: "Rate Us"),
         SettingsOption(icon: "iconoir_mail", title: "Contact Us")
     ]
+    @Published var showSubsView: Bool = false
 }

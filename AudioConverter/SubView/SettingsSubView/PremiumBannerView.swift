@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PremiumBannerView: View {
+    var action: () -> ()
     var body: some View {
         VStack(spacing: 12) {
             Image(.settingBanner)
@@ -21,7 +22,7 @@ struct PremiumBannerView: View {
                 .foregroundColor(Color.gray50)
             
             Button(action: {
-                
+                action()
             }) {
                 Text("Try now")
                     .foregroundColor(.white)
