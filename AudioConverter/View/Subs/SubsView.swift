@@ -16,6 +16,8 @@ struct SubsView: View {
         VStack(spacing: 15) {
             VStack(spacing: 30) {
                 header
+                
+                Spacer()
                             
                 bodyIcon
                 
@@ -26,9 +28,7 @@ struct SubsView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
             }
-            
-            Spacer()
-            
+                        
             productSelection
             
             trialInfo
