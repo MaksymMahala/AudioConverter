@@ -60,6 +60,9 @@ struct CompressEditorView: View {
             Button("Done") {
                 if let videoURL = videoURL {
                     viewModel.saveFileToDB(fileName: videoURL.absoluteString, type: "Video")
+                    if let controller = ShareHelper.getRootController() {
+                        ShareManager.shared.shareFiles([videoURL], from: controller)
+                    }
                     dismiss()
                 }
             }

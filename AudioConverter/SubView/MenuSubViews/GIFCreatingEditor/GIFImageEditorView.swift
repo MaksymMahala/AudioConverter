@@ -59,6 +59,11 @@ struct GIFImageEditorView: View {
             Spacer()
             Button("Done") {
                 viewModel.saveEditedImageToDB(selectedImage: viewModel.image)
+                if let generatedGIFURL = viewModel.generatedGIFURL {
+                    if let controller = ShareHelper.getRootController() {
+                        ShareManager.shared.shareFiles([generatedGIFURL], from: controller)
+                    }
+                }
                 dismiss()
             }
             .font(Font.custom(size: 16, weight: .bold))

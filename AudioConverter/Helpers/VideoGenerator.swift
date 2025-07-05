@@ -10,91 +10,94 @@ import UIKit
 
 enum VideoGenerator {
     static func createVideoFromAudio(audioURL: URL, outputFormat: String, completion: @escaping (URL?) -> Void) {
-          let size = CGSize(width: 1080, height: 1920)
-          let duration = getAudioDuration(url: audioURL)
+        let size = CGSize(width: 1080, height: 1920)
+        
+        let audioAsset = AVURLAsset(url: audioURL)
+        let duration = CMTimeGetSeconds(audioAsset.duration)
+        
+        guard duration > 0 else {
+            print("❌ Audio duration is zero")
+            completion(nil)
+            return
+        }
+        
+        let (fileExtension, fileType) = fileExtensionAndType(for: outputFormat)
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + fileExtension)
+        
+        do {
+            let writer = try AVAssetWriter(outputURL: outputURL, fileType: fileType)
+            
+            let videoSettings: [String: Any] = [
+                AVVideoCodecKey: AVVideoCodecType.h264,
+                AVVideoWidthKey: size.width,
+                AVVideoHeightKey: size.height
+            ]
+            
+            let writerInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
+            writerInput.expectsMediaDataInRealTime = false
+            
+            let sourceBufferAttributes: [String: Any] = [
+                kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32ARGB),
+                kCVPixelBufferWidthKey as String: size.width,
+                kCVPixelBufferHeightKey as String: size.height
+            ]
+            
+            let pixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(
+                assetWriterInput: writerInput,
+                sourcePixelBufferAttributes: sourceBufferAttributes
+            )
+            
+            guard writer.canAdd(writerInput) else {
+                print("❌ Cannot add writer input")
+                completion(nil)
+                return
+            }
+            
+            writer.add(writerInput)
+            
+            writer.startWriting()
+            writer.startSession(atSourceTime: .zero)
+            
+            let fps: Int32 = 30
+            let frameDuration = CMTime(value: 1, timescale: fps)
+            let totalFrames = Int(duration * Double(fps))
+            var frameCount: Int64 = 0
+            
+            let queue = DispatchQueue(label: "video.generator.queue")
+            writerInput.requestMediaDataWhenReady(on: queue) {
+                while writerInput.isReadyForMoreMediaData && frameCount < Int64(totalFrames) {
+                    let presentationTime = CMTimeMultiply(frameDuration, multiplier: Int32(frameCount))
+                    if let pixelBuffer = createPixelBuffer(size: size, color: .black) {
+                        pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime)
+                    }
+                    frameCount += 1
+                }
+                
+                if frameCount >= Int64(totalFrames) {
+                    writerInput.markAsFinished()
+                    writer.finishWriting {
+                        mergeAudioWithVideo(videoURL: outputURL, audioURL: audioURL, outputFileType: fileType, completion: completion)
+                    }
+                }
+            }
+        } catch {
+            print("Writer error: \(error)")
+            completion(nil)
+        }
+    }
 
-          let (fileExtension, fileType) = fileExtensionAndType(for: outputFormat)
-
-          let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + fileExtension)
-
-          let writer: AVAssetWriter
-          let writerInput: AVAssetWriterInput
-          let pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor
-
-          do {
-              writer = try AVAssetWriter(outputURL: outputURL, fileType: fileType)
-
-              let settings: [String: Any] = [
-                  AVVideoCodecKey: AVVideoCodecType.h264,
-                  AVVideoWidthKey: size.width,
-                  AVVideoHeightKey: size.height
-              ]
-
-              writerInput = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
-              writerInput.expectsMediaDataInRealTime = false
-
-              let sourceBufferAttributes: [String: Any] = [
-                  kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32ARGB),
-                  kCVPixelBufferWidthKey as String: size.width,
-                  kCVPixelBufferHeightKey as String: size.height
-              ]
-
-              pixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(
-                  assetWriterInput: writerInput,
-                  sourcePixelBufferAttributes: sourceBufferAttributes
-              )
-
-              guard writer.canAdd(writerInput) else {
-                  completion(nil)
-                  return
-              }
-
-              writer.add(writerInput)
-          } catch {
-              print("Writer error: \(error)")
-              completion(nil)
-              return
-          }
-
-          writer.startWriting()
-          writer.startSession(atSourceTime: .zero)
-
-          let fps: Int32 = 30
-          let frameDuration = CMTime(value: 1, timescale: fps)
-          var frameCount: Int64 = 0
-          let totalFrames = Int64(duration * Double(fps))
-
-          let queue = DispatchQueue(label: "video.generator.queue")
-
-          writerInput.requestMediaDataWhenReady(on: queue) {
-              while writerInput.isReadyForMoreMediaData && frameCount < totalFrames {
-                  let presentationTime = CMTimeMultiply(frameDuration, multiplier: Int32(frameCount))
-                  if let pixelBuffer = createPixelBuffer(size: size, color: .black) {
-                      pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime)
-                  }
-                  frameCount += 1
-              }
-
-              writerInput.markAsFinished()
-              writer.finishWriting {
-                  // Attach audio track after video creation
-                  mergeAudioWithVideo(videoURL: outputURL, audioURL: audioURL, outputFileType: fileType, completion: completion)
-              }
-          }
-      }
-
-      private static func fileExtensionAndType(for format: String) -> (String, AVFileType) {
-          switch format.lowercased() {
-          case "mov":
-              return ("mov", .mov)
-          case "m4v":
-              return ("m4v", .m4v)
-          case "mp4":
-              fallthrough
-          default:
-              return ("mp4", .mp4)
-          }
-      }
+    private static func fileExtensionAndType(for format: String) -> (String, AVFileType) {
+        switch format.lowercased() {
+        case "mov":
+            return ("mov", .mov)
+        case "m4v":
+            return ("m4v", .m4v)
+        case "mp4":
+            fallthrough
+        default:
+            return ("mp4", .mp4)
+        }
+    }
 
     private static func mergeAudioWithVideo(videoURL: URL, audioURL: URL, outputFileType: AVFileType, completion: @escaping (URL?) -> Void) {
         let mixComposition = AVMutableComposition()

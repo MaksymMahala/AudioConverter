@@ -95,10 +95,16 @@ struct ExportAudioToVideoView: View {
                         if let url = exportURL {
                             if audioAction == .convert {
                                 playerViewModel.saveConvertedFileToDB(url: url, fileName: url.lastPathComponent, type: "Video")
+                                if let controller = ShareHelper.getRootController() {
+                                    ShareManager.shared.shareFiles([url], from: controller)
+                                }
                                 isEditorPresented = false
                                 dismiss()
                             } else {
                                 playerViewModel.saveConvertedFileToDB(url: url, fileName: url.lastPathComponent, type: "Audio")
+                                if let controller = ShareHelper.getRootController() {
+                                    ShareManager.shared.shareFiles([url], from: controller)
+                                }
                                 isEditorPresented = false
                                 dismiss()
                             }

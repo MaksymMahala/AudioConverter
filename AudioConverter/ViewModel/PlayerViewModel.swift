@@ -279,7 +279,6 @@ extension PlayerViewModel {
         case "WAV 44100":
             let ext = "wav"
             let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
-
             VideoAudioConverter.convertToWAV(inputURL: originalAudioURL, outputURL: outputURL) { success in
                 DispatchQueue.main.async {
                     if success {
@@ -293,11 +292,13 @@ extension PlayerViewModel {
             return
         case "MP3":
             exportMP3(from: originalAudioURL) { mp3URL in
-                if let mp3URL = mp3URL {
-                    completion(mp3URL)
-                } else {
-                    print("MP3 export failed")
-                    completion(nil)
+                DispatchQueue.main.async {
+                    if let mp3URL = mp3URL {
+                        completion(mp3URL)
+                    } else {
+                        print("MP3 export failed")
+                        completion(nil)
+                    }
                 }
             }
             return
@@ -307,8 +308,15 @@ extension PlayerViewModel {
         }
 
         let asset = AVURLAsset(url: originalAudioURL)
+
+        guard asset.tracks(withMediaType: .audio).first != nil else {
+            print("❌ No audio track found in the original file")
+            completion(nil)
+            return
+        }
+
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: preset) else {
-            print("Could not create export session")
+            print("❌ Could not create export session")
             completion(nil)
             return
         }
@@ -318,14 +326,16 @@ extension PlayerViewModel {
         exportSession.outputURL = outputURL
         exportSession.outputFileType = fileType(forExtension: ext)
         exportSession.shouldOptimizeForNetworkUse = true
+        exportSession.timeRange = CMTimeRange(start: .zero, duration: asset.duration) // ✅ додаємо
 
         exportSession.exportAsynchronously {
             DispatchQueue.main.async {
                 switch exportSession.status {
                 case .completed:
+                    print("✅ Exported to: \(outputURL)")
                     completion(outputURL)
                 case .failed, .cancelled:
-                    print("Export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
+                    print("❌ Export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
                     completion(nil)
                 default:
                     completion(nil)
@@ -343,12 +353,32 @@ extension PlayerViewModel {
         }
     }
     
-    func exportMP3(from pcmURL: URL, completion: @escaping (URL?) -> Void) {
-        let mp3URL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp3")
-        DispatchQueue.global(qos: .userInitiated).async {
-            let success = MP3Encoder.convertPCMtoMP3(pcmURL: pcmURL, mp3URL: mp3URL)
-            DispatchQueue.main.async {
-                completion(success ? mp3URL : nil)
+    func exportMP3(from originalAudioURL: URL, completion: @escaping (URL?) -> Void) {
+        let wavURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
+        
+        VideoAudioConverter.convertToWAV(inputURL: originalAudioURL, outputURL: wavURL) { success in
+            guard success else {
+                print("❌ WAV conversion failed")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+
+            let mp3URL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp3")
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                let success = MP3Encoder.convertPCMtoMP3(pcmURL: wavURL, mp3URL: mp3URL)
+                
+                DispatchQueue.main.async {
+                    if success {
+                        print("✅ MP3 export succeeded at: \(mp3URL)")
+                        completion(mp3URL)
+                    } else {
+                        print("❌ MP3 export failed")
+                        completion(nil)
+                    }
+                }
             }
         }
     }

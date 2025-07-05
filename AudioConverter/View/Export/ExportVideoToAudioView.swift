@@ -94,12 +94,17 @@ struct ExportVideoToAudioView: View {
                     
                     Button {
                         if let convertedURL = exportURL {
-                              playerViewModel.saveConvertedFileToDB(url: convertedURL, fileName: convertedURL.lastPathComponent, type: "Audio")
-                              isEditorPresented = false
-                              dismiss()
-                          } else {
-                              print("No converted file to save")
-                          }
+                            playerViewModel.saveConvertedFileToDB(url: convertedURL, fileName: convertedURL.lastPathComponent, type: "Audio")
+
+                            if let controller = ShareHelper.getRootController() {
+                                ShareManager.shared.shareFiles([convertedURL], from: controller)
+                            }
+
+                            isEditorPresented = false
+                            dismiss()
+                        } else {
+                            print("No converted file to save")
+                        }
                     } label: {
                         HStack {
                             Text("Share")
@@ -128,8 +133,6 @@ struct ExportVideoToAudioView: View {
             playerViewModel.convertToAudio(originalAudioURL: audioURL) { url in
                 if let url = url {
                     exportURL = url
-                    isEditorPresented = false
-                    dismiss()
                     print("Conversion succeeded, file: \(url)")
                 } else {
                     print("Conversion failed")

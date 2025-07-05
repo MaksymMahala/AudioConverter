@@ -79,6 +79,9 @@ struct EditImageEditorView: View {
             Button("Done") {
                 if let imageURL = imageURL {
                     playerViewModel.saveEditedImageToDB(fileName: imageURL.absoluteString, type: "Image", selectedImage: selectedImage)
+                    if let controller = ShareHelper.getRootController() {
+                        ShareManager.shared.shareFiles([imageURL], from: controller)
+                    }
                     dismiss()
                 }
             }

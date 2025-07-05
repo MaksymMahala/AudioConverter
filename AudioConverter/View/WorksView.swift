@@ -219,6 +219,25 @@ struct WorksView: View {
                             worksViewModel.showFolderPickerSheet = true
                         }
                         
+                        Button("Share") {
+                            worksViewModel.selectedFile = file
+                            if let file = worksViewModel.selectedFile,
+                               let filePath = file.fileURL {
+                                
+                                let fileURL = URL(fileURLWithPath: filePath)
+
+                                if FileManager.default.fileExists(atPath: fileURL.path),
+                                   let controller = ShareHelper.getRootController() {
+                                    ShareManager.shared.shareFiles([fileURL], from: controller)
+                                } else {
+                                    print("🚫 File doesn't exist at path: \(fileURL.path)")
+                                }
+                            } else {
+                                print("🚫 No selected file or invalid file path")
+                            }
+
+                        }
+                        
                         Button("Delete", role: .destructive) {
                             worksViewModel.selectedFile = file
                             worksViewModel.alertType = .deleteFile

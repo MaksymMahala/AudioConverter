@@ -19,7 +19,7 @@ final class GIFImageEditorViewModel: ObservableObject {
     @Published var openNumberOfCycles = false
     @Published var openFrameRate = false
     @Published var openResolution = false
-    @Published private(set) var generatedGIFURL: URL?
+    @Published var generatedGIFURL: URL?
 
     let duration: Double = 216.0
     let image: UIImage?
