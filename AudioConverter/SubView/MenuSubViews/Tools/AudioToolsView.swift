@@ -37,14 +37,20 @@ struct AudioToolsView: View {
                                 viewModel.audioAction = .convert
                             }
                         case "Create a melody":
-                            withAnimation {
-                                viewModel.audioAction = .createMelody
-                                viewModel.openAudioView = true
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                withAnimation {
+                                    viewModel.audioAction = .createMelody
+                                    viewModel.openAudioView = true
+                                }
                             }
                         case "Trim audio":
-                            withAnimation {
-                                viewModel.audioAction = .trim
-                                viewModel.openAudioView = true
+                            PurchaseManager.instance.canPerformFreeActionTodayOrHasSubscription { isAccess in
+                                if isAccess {
+                                    withAnimation {
+                                        viewModel.audioAction = .trim
+                                        viewModel.openAudioView = true
+                                    }
+                                }
                             }
                         case "Edit Audio":
                             withAnimation {

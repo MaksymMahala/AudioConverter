@@ -12,6 +12,7 @@ class CompressVideoEditorViewModel: ObservableObject {
     @Published var timeRangeStart: Double = 0
     @Published var timeRangeEnd: Double = 5
     @Published var isEditingTimeRange = false
+    @Published var hasProAcces = false
     
     @Published var openResolution = false
     @Published var openFrameRate = false

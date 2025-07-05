@@ -27,16 +27,19 @@ struct GIFImageEditorView: View {
             Spacer()
         }
         .onAppear {
+            if PurchaseManager.instance.userPurchaseIsActive {
+                viewModel.hasProAcces = true
+            }
             isLoading = false
         }
         .sheet(isPresented: $viewModel.openResolution) {
             ResolutionPickerView(
                 selectedResolution: $viewModel.selectedResolution,
-                originalResolution: viewModel.selectedResolution ?? ResolutionOption(size: CGSize(width: 480, height: 720))
+                originalResolution: viewModel.selectedResolution ?? ResolutionOption(size: CGSize(width: 480, height: 720)), hasProAccess: viewModel.hasProAcces
             )
         }
         .sheet(isPresented: $viewModel.openFrameRate) {
-            FrameRateView(selectedFrameRate: $viewModel.selectedFrameRate, isVideo: false, hasProAccess: false)
+            FrameRateView(selectedFrameRate: $viewModel.selectedFrameRate, isVideo: false, hasProAccess: viewModel.hasProAcces)
         }
         .sheet(isPresented: $viewModel.openNumberOfCycles) {
             NumberOfCyclesView(selectedNumberOfCycles: $viewModel.selectedNumberOfCycles)

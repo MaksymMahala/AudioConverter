@@ -33,11 +33,14 @@ struct CutVideoEditorView: View {
             if let videoURL = videoURL {
                 viewModel.loadVideoInfo(from: videoURL)
             }
+            if PurchaseManager.instance.userPurchaseIsActive {
+                viewModel.hasProAccess = true
+            }
         }
         .sheet(isPresented: $viewModel.openResolution) {
             ResolutionPickerView(
                 selectedResolution: $viewModel.selectedResolution,
-                originalResolution: viewModel.selectedResolution ?? ResolutionOption(size: CGSize(width: 480, height: 720))
+                originalResolution: viewModel.selectedResolution ?? ResolutionOption(size: CGSize(width: 480, height: 720)), hasProAccess: viewModel.hasProAccess
             )
         }
     }

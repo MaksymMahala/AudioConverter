@@ -22,6 +22,7 @@ class CutVideoEditorViewModel: ObservableObject {
     @Published var duration: Double = 1
     @Published var startTime: Double = 0
     @Published var endTime: Double = 5
+    @Published var hasProAccess = false
     
     private var player: AVPlayer?
     private var playerItem: AVPlayerItem?

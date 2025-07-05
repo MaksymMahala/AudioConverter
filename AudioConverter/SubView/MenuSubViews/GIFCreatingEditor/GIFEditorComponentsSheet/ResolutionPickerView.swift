@@ -25,6 +25,8 @@ struct ResolutionPickerView: View {
         .init(value: "640*480", isPro: false)
     ]
     
+    let hasProAccess: Bool
+    
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -76,8 +78,10 @@ struct ResolutionPickerView: View {
     
     private func resolutionRow(option: ResolutionOption) -> some View {
         Button(action: {
-            if !option.isPro {
+            if !option.isPro || hasProAccess {
                 selectedResolution = option
+            } else {
+                print("Pro access required for this resolution")
             }
         }) {
             VStack {
@@ -88,7 +92,7 @@ struct ResolutionPickerView: View {
                     
                     Text(option.value)
                         .font(Font.custom(size: 16, weight: .regular))
-                        .foregroundColor(.gray50)
+                        .foregroundColor(option.isPro && !hasProAccess ? Color.gray : Color.gray50)
                     
                     Spacer()
                     
@@ -111,5 +115,6 @@ struct ResolutionPickerView: View {
                     .padding(.top, 2)
             }
         }
+        .disabled(option.isPro && !hasProAccess)
     }
 }

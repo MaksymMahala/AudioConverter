@@ -15,10 +15,14 @@ import StoreKit
 final class PurchaseManager {
     
     // MARK: - Properties
+    @AppStorage("lastFreeTrialDate") private var lastFreeTrialDate: String = ""
+    @AppStorage("freeTrialUsageCount") private var freeTrialUsageCount: Int = 0
     @AppStorage("userPurchaseIsActive_Locator0301") var userPurchaseIsActive: Bool = false
     @AppStorage("shouldShowPromotion_Locator0301") var shouldShowPromotion = true
     static let instance = PurchaseManager()
     var products: [ApphudProduct] = []
+    
+    private let freeTrialLimit = 3
     
     private init() {}
     
@@ -86,16 +90,53 @@ final class PurchaseManager {
         userPurchaseIsActive = Apphud.hasActiveSubscription()
     }
     
-   func requestTrackingPermission() {
+    private func canUseFreeTrial() -> Bool {
+        return freeTrialUsageCount < freeTrialLimit || userPurchaseIsActive
+    }
+    
+    private func incrementFreeTrialUsage() {
+        guard !userPurchaseIsActive else { return }
+        freeTrialUsageCount += 1
+    }
+    
+    func checkTrialOrPurchase(completion: @escaping (Bool) -> Void) {
+        if canUseFreeTrial() {
+            incrementFreeTrialUsage()
+            completion(true)
+        } else {
+            completion(false)
+        }
+    }
+    
+    private func hasUsedFreeActionToday() -> Bool {
+        let today = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+        return lastFreeTrialDate == today
+    }
+    
+    private func markFreeActionUsedToday() {
+        let today = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+        lastFreeTrialDate = today
+    }
+    
+    func canPerformFreeActionTodayOrHasSubscription(completion: @escaping (Bool) -> Void) {
+        if userPurchaseIsActive {
+            completion(true)
+        } else if !hasUsedFreeActionToday() {
+            markFreeActionUsedToday()
+            completion(true)
+        } else {
+            completion(false)
+        }
+    }
+    
+    func requestTrackingPermission() {
         if #available(iOS 14, *) {
             ATTrackingManager.requestTrackingAuthorization { status in
                 switch status {
                 case .authorized:
-                    // The user authorized access to IDFA
                     print("Tracking authorized. IDFA: \(ASIdentifierManager.shared().advertisingIdentifier)")
                     self.fetchIDFA()
                 case .denied, .restricted, .notDetermined:
-                    // The user denied or restricted access, or the authorization is not determined yet
                     print("Tracking denied or restricted")
                 @unknown default:
                     break

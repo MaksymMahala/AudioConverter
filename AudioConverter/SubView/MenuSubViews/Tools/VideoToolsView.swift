@@ -41,24 +41,36 @@ struct VideoToolsView: View {
                                 viewModel.openAudioView = true
                             }
                         case "Trim video":
-                            withAnimation {
-                                viewModel.videoAction = .trim
-                                viewModel.openAudioView = true
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                withAnimation {
+                                    viewModel.videoAction = .trim
+                                    viewModel.openAudioView = true
+                                }
                             }
                         case "Cut video":
-                            withAnimation {
-                                viewModel.videoAction = .cut
-                                viewModel.openAudioView = true
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                withAnimation {
+                                    viewModel.videoAction = .cut
+                                    viewModel.openAudioView = true
+                                }
                             }
                         case "Compress video":
-                            withAnimation {
-                                viewModel.videoAction = .compress
-                                viewModel.openAudioView = true
+                            PurchaseManager.instance.canPerformFreeActionTodayOrHasSubscription { isAccess in
+                                if isAccess {
+                                    withAnimation {
+                                        viewModel.videoAction = .compress
+                                        viewModel.openAudioView = true
+                                    }
+                                }
                             }
                         case "Delete a video":
-                            withAnimation {
-                                viewModel.videoAction = .delete
-                                viewModel.openAudioView = true
+                            PurchaseManager.instance.checkTrialOrPurchase { allowed in
+                                if allowed {
+                                    withAnimation {
+                                        viewModel.videoAction = .delete
+                                        viewModel.openAudioView = true
+                                    }
+                                }
                             }
                         default:
                             withAnimation {
@@ -79,19 +91,27 @@ struct VideoToolsView: View {
                     Button {
                         switch tool.title {
                         case "Add Watermark":
-                            withAnimation {
-                                viewModel.videoAction = .waterMark
-                                viewModel.openAudioView = true
+                            PurchaseManager.instance.checkTrialOrPurchase { allowed in
+                                if allowed {
+                                    withAnimation {
+                                        viewModel.videoAction = .waterMark
+                                        viewModel.openAudioView = true
+                                    }
+                                }
                             }
                         case "Set cover":
-                            withAnimation {
-                                viewModel.videoAction = .setCover
-                                viewModel.openAudioView = true
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                withAnimation {
+                                    viewModel.videoAction = .setCover
+                                    viewModel.openAudioView = true
+                                }
                             }
                         default:
-                            withAnimation {
-                                viewModel.videoAction = .waterMark
-                                viewModel.openAudioView = true
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                withAnimation {
+                                    viewModel.videoAction = .waterMark
+                                    viewModel.openAudioView = true
+                                }
                             }
                         }
                     } label: {

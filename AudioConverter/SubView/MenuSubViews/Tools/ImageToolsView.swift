@@ -37,8 +37,10 @@ struct ImageToolsView: View {
                                 viewModel.openImageView = true
                             }
                         case "Creating GIF files":
-                            viewModel.imageAction = .gif
-                            viewModel.openImageView = true
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                viewModel.imageAction = .gif
+                                viewModel.openImageView = true
+                            }
                         default:
                             withAnimation {
                                 viewModel.imageAction = .convert
