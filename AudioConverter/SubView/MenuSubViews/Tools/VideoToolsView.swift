@@ -123,5 +123,8 @@ struct VideoToolsView: View {
         .fullScreenCover(isPresented: $viewModel.isDeleteEditorPresented) {
             DeleteAVideoEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
         }
+        .fullScreenCover(isPresented: $viewModel.isSetCoverEditorPresented) {
+            SetCoverEditorView(isLoading: $isLoadingVideo, videoURL: viewModel.videoURL)
+        }
     }
 }

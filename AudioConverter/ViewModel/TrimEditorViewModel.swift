@@ -23,6 +23,8 @@ class TrimEditorViewModel: ObservableObject {
     @Published var endTime: Double = 5
     
     //MARK: Watermark
+    @Published var setCoverImage: UIImage? = nil
+    @Published var isPresentedSetCoverSheet = false
     @Published var isPresentedLoading = false
     @Published var selectedNumberWaterMarks = 0
     @Published var isNumberOfWaterMarkView = false
@@ -125,6 +127,45 @@ class TrimEditorViewModel: ObservableObject {
             }
         }
     }
+    
+    func saveCoveredFileToDB(fileName: String, type: String) async {
+        guard let videoURL = self.videoURL else {
+            print("No video URL to export")
+            return
+        }
+
+        let asset = AVAsset(url: videoURL)
+        guard let videoTrack = asset.tracks(withMediaType: .video).first,
+              let audioTrack = asset.tracks(withMediaType: .audio).first else {
+            print("Failed to get video or audio tracks")
+            return
+        }
+
+        let duration = asset.duration
+
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp4")
+
+        try? await exportSetCover(
+            videoTrack: videoTrack,
+            audioTrack: audioTrack,
+            duration: duration,
+            coverImage: setCoverImage,
+            outputURL: outputURL
+        ) { outputURL in
+            if let outputURL = outputURL {
+                CoreDataManager.shared.addSavedFile(
+                    fileURL: outputURL,
+                    fileName: fileName,
+                    type: type,
+                    fileSize: self.fileSize(fileURL: outputURL),
+                    duration: self.formatTime(CMTimeGetSeconds(duration))
+                )
+            } else {
+                print("Export failed")
+            }
+        }
+    }
+
     
     func saveWaterMarkedFileToDB(fileName: String, type: String) {
         let start = CMTime(seconds: timeRangeStart, preferredTimescale: 600)
@@ -273,6 +314,86 @@ class TrimEditorViewModel: ObservableObject {
 }
 
 extension TrimEditorViewModel {
+    private func exportSetCover(
+        videoTrack: AVAssetTrack,
+        audioTrack: AVAssetTrack,
+        duration: CMTime,
+        coverImage: UIImage?,
+        outputURL: URL,
+        completion: @escaping (URL?) -> Void
+    ) async throws {
+        let mixComposition = AVMutableComposition()
+
+        guard let videoCompositionTrack = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
+              let audioCompositionTrack = mixComposition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            completion(nil)
+            return
+        }
+
+        try videoCompositionTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: duration), of: videoTrack, at: .zero)
+        try audioCompositionTrack.insertTimeRange(CMTimeRangeMake(start: .zero, duration: duration), of: audioTrack, at: .zero)
+
+        guard let exportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality) else {
+            completion(nil)
+            return
+        }
+
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .mp4
+        exportSession.shouldOptimizeForNetworkUse = true
+
+        if let coverImage = coverImage {
+            let size = videoTrack.naturalSize
+
+            let imageLayer = CALayer()
+            imageLayer.contents = coverImage.cgImage
+            imageLayer.frame = CGRect(origin: .zero, size: size)
+            imageLayer.opacity = 1.0
+
+            let videoLayer = CALayer()
+            videoLayer.frame = CGRect(origin: .zero, size: size)
+
+            let parentLayer = CALayer()
+            parentLayer.frame = CGRect(origin: .zero, size: size)
+            parentLayer.addSublayer(videoLayer)
+            parentLayer.addSublayer(imageLayer)
+
+            let instruction = AVMutableVideoCompositionInstruction()
+            instruction.timeRange = CMTimeRange(start: .zero, duration: duration)
+
+            let layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: videoCompositionTrack)
+            instruction.layerInstructions = [layerInstruction]
+
+            let videoComposition = AVMutableVideoComposition()
+            videoComposition.instructions = [instruction]
+            videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
+            videoComposition.renderSize = size
+            videoComposition.animationTool = AVVideoCompositionCoreAnimationTool(
+                postProcessingAsVideoLayer: videoLayer,
+                in: parentLayer
+            )
+
+            exportSession.videoComposition = videoComposition
+        }
+
+        exportSession.exportAsynchronously {
+            switch exportSession.status {
+            case .completed:
+                completion(outputURL)
+            case .failed:
+                print("Export failed: \(exportSession.error?.localizedDescription ?? "Unknown error")")
+                completion(nil)
+            case .cancelled:
+                print("Export cancelled")
+                completion(nil)
+            default:
+                print("Export status: \(exportSession.status)")
+                completion(nil)
+            }
+        }
+    }
+
+
     private func exportTrimmedVideo(completion: @escaping (URL?) -> Void) {
         guard let videoURL = videoURL else {
             completion(nil)

@@ -1,15 +1,14 @@
 //
-//  WatermarkEditorView.swift
+//  SetCoverEditorView.swift
 //  AudioConverter
 //
-//  Created by Max on 04.07.2025.
+//  Created by Max on 05.07.2025.
 //
 
 import SwiftUI
 import AVKit
-import PhotosUI
 
-struct WatermarkEditorView: View {
+struct SetCoverEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TrimEditorViewModel
     @Binding var isLoading: Bool
@@ -27,6 +26,9 @@ struct WatermarkEditorView: View {
             slider
             addWaterMark
             Spacer()
+        }
+        .sheet(isPresented: $viewModel.isPresentedSetCoverSheet) {
+            SetCoverSheetView(selectedImage: $viewModel.setCoverImage)
         }
         .onAppear {
             isLoading = false
@@ -51,12 +53,14 @@ struct WatermarkEditorView: View {
                     .font(Font.custom(size: 16, weight: .bold))
                 Spacer()
                 Button("Done") {
-                    if let videoURL = videoURL {
-                        viewModel.saveWaterMarkedFileToDB(fileName: videoURL.absoluteString, type: "Video")
-                        if let controller = ShareHelper.getRootController() {
-                            ShareManager.shared.shareFiles([videoURL], from: controller)
+                    Task {
+                        if let videoURL = videoURL {
+                            await viewModel.saveCoveredFileToDB(fileName: videoURL.absoluteString, type: "Video")
+                            if let controller = ShareHelper.getRootController() {
+                                ShareManager.shared.shareFiles([videoURL], from: controller)
+                            }
+                            dismiss()
                         }
-                        dismiss()
                     }
                 }
                 .font(Font.custom(size: 16, weight: .bold))
@@ -64,7 +68,7 @@ struct WatermarkEditorView: View {
             }
 
             Button("Reset settings") {
-                viewModel.watermarkImage = nil
+                viewModel.setCoverImage = nil
             }
             .foregroundStyle(Color.black)
             .font(Font.custom(size: 16, weight: .bold))
@@ -82,23 +86,13 @@ struct WatermarkEditorView: View {
                     .frame(height: maxHeight)
                     .cornerRadius(16)
 
-                if let watermarkImage = viewModel.watermarkImage {
+                if let watermarkImage = viewModel.setCoverImage {
                     Image(uiImage: watermarkImage)
                         .resizable()
-                        .frame(width: 80, height: 80)
+                        .frame(height: 320)
+                        .frame(maxWidth: .infinity)
                         .offset(x: viewModel.watermarkOffset.width + viewModel.dragOffset.width,
                                 y: viewModel.watermarkOffset.height + viewModel.dragOffset.height)
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    viewModel.dragOffset = gesture.translation
-                                }
-                                .onEnded { gesture in
-                                    viewModel.watermarkOffset.width += gesture.translation.width
-                                    viewModel.watermarkOffset.height += gesture.translation.height
-                                    viewModel.dragOffset = .zero
-                                }
-                        )
                         .padding()
                 }
             }
@@ -146,20 +140,18 @@ struct WatermarkEditorView: View {
 
     private var addWaterMark: some View {
         VStack {
-            PhotosPicker(
-                selection: $viewModel.selectedItem,
-                matching: .images,
-                photoLibrary: .shared()
-            ) {
+            Button {
+                viewModel.isPresentedSetCoverSheet = true
+            } label: {
                 HStack {
-                    Text("Add a watermark")
+                    Text("Add cover")
                         .font(Font.custom(size: 16, weight: .regular))
                         .foregroundColor(.gray50)
                     Spacer()
                     Image(.iconoirImport)
                 }
-                .padding(.vertical, 10)
             }
+            .padding(.vertical, 10)
 
             Divider()
                 .overlay(Color.gray50)
@@ -169,5 +161,5 @@ struct WatermarkEditorView: View {
 }
 
 #Preview {
-    WatermarkEditorView(isLoading: .constant(false), videoURL: URL(string: "video.mov"))
+    SetCoverEditorView(isLoading: .constant(false), videoURL: URL(string: "video.mov"))
 }
