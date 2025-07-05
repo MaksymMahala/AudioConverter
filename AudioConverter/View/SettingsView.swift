@@ -20,9 +20,11 @@ struct SettingsView: View {
             
             ScrollView(showsIndicators: false) {
                 if !PurchaseManager.instance.userPurchaseIsActive {
-                    PremiumBannerView()
-                        .padding(.horizontal)
-                        .padding(.vertical)
+                    PremiumBannerView {
+                        viewModel.showSubsView = true
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical)
                 }
                 
                 if PurchaseManager.instance.userPurchaseIsActive {
@@ -61,6 +63,9 @@ struct SettingsView: View {
             }
         }
         .background(Color.white.ignoresSafeArea())
+        .fullScreenCover(isPresented: $viewModel.showSubsView) {
+            SubsView()
+        }
     }
 }
 

@@ -45,7 +45,7 @@ struct PayWallView: View {
                 HStack(spacing: 0) {
                     Text("access, or")
                     Button(action: {
-                        UserDefaultsManager.isLoggedIn = true
+                        UserDefaultsManager.shared.isLoggedIn = true
                     }) {
                         Text(" proceed with limited version")
                             .underline()
@@ -63,7 +63,7 @@ struct PayWallView: View {
                 withAnimation {
                     if let product = viewModel.selectedProduct {
                         viewModel.purchaseProduct(product.productId) {
-                            UserDefaultsManager.isLoggedIn = true
+                            UserDefaultsManager.shared.isLoggedIn = true
                         }
                     }
                 }

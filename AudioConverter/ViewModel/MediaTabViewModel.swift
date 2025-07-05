@@ -10,4 +10,5 @@ import Foundation
 final class MediaTabViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var selectedTab: MediaTab = .video
+    @Published var showSubsView: Bool = false
 }

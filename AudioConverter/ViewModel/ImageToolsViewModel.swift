@@ -16,12 +16,17 @@ final class ImageToolsViewModel: ObservableObject {
     @Published var bottomTool: ToolItem = ToolItem(title: "Edit an image", subtitle: "", iconName: "iconoir_edit-pencil_purple")
     @Published var isDrivePickerPresented = false
     @Published var isDocumentPickerPresented = false
-    @Published var imageURL: URL?
     @Published var openImageView = false
+    @Published var openEditImageEditor = false
+    @Published var openGIFImageEditor = false
     @Published var isEditorPresented = false
     @Published var isCameraPresented = false
+    @Published var isImagePickerPresented = false
+    
+    @Published var imageURL: URL?
     @Published var selectedImage: UIImage?
 
-    @Published var isImagePickerPresented = false
     @Published var errorMessage: String?
+    @Published var imageAction: ImageAction = .convert
+
 }

@@ -12,9 +12,13 @@ struct AudioToVideoEditorView: View {
     @StateObject private var playerViewModel = PlayerViewModel()
     
     let audioURL: URL?
+    let audioAction: AudioAction
 
     @Binding var isLoading: Bool
     @Binding var isEditorPresented: Bool
+    
+    @State private var trimmedAudioURL: URL?
+    @State private var isTrimNavigationActive = false
     
     var body: some View {
         NavigationView {
@@ -22,12 +26,32 @@ struct AudioToVideoEditorView: View {
                 header
                 waveformSection
                 controls
-                Divider()
-                    .padding(.top, 30)
-                conditionalContent
+                
+                if audioAction == .convert || audioAction == .edit {
+                    Divider()
+                        .padding(.top, 30)
+                    conditionalContent
+                } else if audioAction == .trim {
+                    trimControls
+                    Divider()
+                        .padding(.top)
+                }
+                
                 Spacer()
-                tabs
+                
+                if audioAction == .convert || audioAction == .edit {
+                    tabs
+                }
             }
+            .fullScreenCover(isPresented: $isTrimNavigationActive) {
+                 ExportAudioToVideoView(
+                    audioAction: audioAction,
+                    audioURL: audioAction == .trim ? trimmedAudioURL : audioURL,
+                    selectedFormat: $playerViewModel.selectedFormat,
+                    isEditorPresented: $isEditorPresented,
+                    playerViewModel: playerViewModel
+                 )
+             }
             .onChange(of: audioURL) { newValue, _ in
                 loadAudio()
             }
@@ -67,9 +91,21 @@ struct AudioToVideoEditorView: View {
                     Image(.iconoirXmark)
                 }
                 Spacer()
-                if playerViewModel.selectedTab == "File format" {
+                if audioAction == .trim {
+                    Button("Export") {
+                        guard let originalURL = audioURL else { return }
+                        playerViewModel.exportTrimmedAudio(from: originalURL) { url in
+                            guard let url = url else { return }
+                            trimmedAudioURL = url
+                            isTrimNavigationActive = true
+                        }
+                    }
+                    .foregroundColor(.black)
+                    .font(Font.custom(size: 16, weight: .bold))
+                } else if audioAction == .createMelody {
                     NavigationLink {
                         ExportAudioToVideoView(
+                            audioAction: audioAction,
                             audioURL: audioURL,
                             selectedFormat: $playerViewModel.selectedFormat,
                             isEditorPresented: $isEditorPresented,
@@ -81,13 +117,29 @@ struct AudioToVideoEditorView: View {
                             .font(Font.custom(size: 16, weight: .bold))
                     }
                 } else {
-                    Button("Next") {
-                        withAnimation {
-                            playerViewModel.selectedTab = "File format"
+                    if playerViewModel.selectedTab == "File format" {
+                        NavigationLink {
+                            ExportAudioToVideoView(
+                                audioAction: audioAction,
+                                audioURL: audioURL,
+                                selectedFormat: $playerViewModel.selectedFormat,
+                                isEditorPresented: $isEditorPresented,
+                                playerViewModel: playerViewModel
+                            )
+                        } label: {
+                            Text("Export")
+                                .foregroundColor(.black)
+                                .font(Font.custom(size: 16, weight: .bold))
                         }
+                    } else {
+                        Button("Next") {
+                            withAnimation {
+                                playerViewModel.selectedTab = "File format"
+                            }
+                        }
+                        .foregroundColor(.black)
+                        .font(Font.custom(size: 16, weight: .bold))
                     }
-                    .foregroundColor(.black)
-                    .font(Font.custom(size: 16, weight: .bold))
                 }
             }
             Text(audioURL?.lastPathComponent ?? "Audio")
@@ -100,18 +152,40 @@ struct AudioToVideoEditorView: View {
     
     private var waveformSection: some View {
         let duration = playerViewModel.duration ?? 1
+
         let currentTimeBinding = Binding<Double>(
             get: { playerViewModel.currentTime },
             set: { newValue in
                 playerViewModel.currentTime = newValue
             }
         )
+
+        let trimStartProgress = CGFloat(playerViewModel.timeRangeStart / duration)
+        let trimEndProgress = CGFloat(playerViewModel.timeRangeEnd / duration)
+
         let progress = CGFloat(playerViewModel.currentTime / duration)
 
         return VStack(spacing: 12) {
-            WaveformView(amplitudes: playerViewModel.waveform, progress: progress)
-                .frame(height: 120)
-                .padding(.horizontal)
+            ZStack(alignment: .leading) {
+                WaveformView(amplitudes: playerViewModel.waveform, progress: progress)
+                    .frame(height: 120)
+                    .padding(.horizontal)
+
+                if audioAction == .trim {
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.primary130.opacity(0.5))
+                            .frame(
+                                width: geo.size.width * (trimEndProgress - trimStartProgress),
+                                height: geo.size.height
+                            )
+                            .offset(x: geo.size.width * trimStartProgress)
+                            .allowsHitTesting(false)
+                    }
+                    .frame(height: 120)
+                }
+            }
+
 
             VStack {
                 Slider(
@@ -215,6 +289,78 @@ struct AudioToVideoEditorView: View {
             }
         }
     }
+    
+    private var trimControls: some View {
+        VStack(spacing: 16) {
+            RangeSlider(
+                minValue: $playerViewModel.currentTime,
+                maxValue: $playerViewModel.timeRangeEnd,
+                range: 0...(playerViewModel.duration ?? 1)
+            )
+            .frame(height: 40)
+            .padding(.horizontal)
+
+            HStack {
+                Text("Trim Range:")
+                Spacer()
+                Text("\(formatTime(playerViewModel.timeRangeStart)) - \(formatTime(playerViewModel.timeRangeEnd))")
+                Text(String(format: "%.1fs", playerViewModel.timeRangeEnd - playerViewModel.timeRangeStart))
+            }
+            .font(.system(size: 13))
+            .foregroundColor(.gray)
+            .padding(.horizontal)
+            
+            HStack {
+                timeAdjusterControl(time: $playerViewModel.timeRangeStart)
+                Spacer()
+                timeAdjusterControl(time: $playerViewModel.timeRangeEnd)
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private func timeAdjusterControl(time: Binding<Double>) -> some View {
+        HStack(spacing: 10) {
+            Button(action: {
+                time.wrappedValue = max(time.wrappedValue - 0.02, 0)
+            }) {
+                Text("-")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.gray)
+                    .frame(width: 30, height: 30)
+            }
+
+            Text(formatTime3Digits(time.wrappedValue))
+                .font(Font.custom(size: 12, weight: .regular))
+                .foregroundColor(Color.gray50)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(20)
+
+            Button(action: {
+                time.wrappedValue = min(time.wrappedValue + 0.02, playerViewModel.duration ?? 1)
+            }) {
+                Text("+")
+                    .font(.custom(size: 23, weight: .regular))
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+    
+    private func formatTime(_ seconds: Double) -> String {
+        let minutes = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%02d:%02d", minutes, secs)
+    }
+
+    private func formatTime3Digits(_ seconds: Double) -> String {
+        let minutes = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        let ms = Int((seconds - Double(minutes * 60 + secs)) * 1000)
+        return String(format: "%02d:%02d:%03d", minutes, secs, ms)
+    }
+
     
     private var formatScroll: some View {
         ScrollView(.horizontal, showsIndicators: false) {

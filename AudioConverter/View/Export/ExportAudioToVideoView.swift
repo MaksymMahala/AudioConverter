@@ -9,6 +9,7 @@ import SwiftUI
 import AVKit
 
 struct ExportAudioToVideoView: View {
+    let audioAction: AudioAction
     let audioURL: URL?
     @Binding var selectedFormat: String
     @Binding var isEditorPresented: Bool
@@ -92,9 +93,21 @@ struct ExportAudioToVideoView: View {
                     
                     Button {
                         if let url = exportURL {
-                            playerViewModel.saveConvertedFileToDB(url: url, fileName: url.lastPathComponent, type: "Video")
-                            isEditorPresented = false
-                            dismiss()
+                            if audioAction == .convert {
+                                playerViewModel.saveConvertedFileToDB(url: url, fileName: url.lastPathComponent, type: "Video")
+                                if let controller = ShareHelper.getRootController() {
+                                    ShareManager.shared.shareFiles([url], from: controller)
+                                }
+                                isEditorPresented = false
+                                dismiss()
+                            } else {
+                                playerViewModel.saveConvertedFileToDB(url: url, fileName: url.lastPathComponent, type: "Audio")
+                                if let controller = ShareHelper.getRootController() {
+                                    ShareManager.shared.shareFiles([url], from: controller)
+                                }
+                                isEditorPresented = false
+                                dismiss()
+                            }
                         }
                     } label: {
                         HStack {
@@ -121,12 +134,16 @@ struct ExportAudioToVideoView: View {
             playerViewModel.load(url: audioURL)
             playerViewModel.applyEffect(nil)
             
-            convertToVideo(audioURL: audioURL, format: selectedFormat) { url in
-                if let url {
-                    exportURL = url
-                } else {
-                    print("Video export failed")
+            if audioAction == .convert {
+                convertToVideo(audioURL: audioURL, format: selectedFormat) { url in
+                    if let url {
+                        exportURL = url
+                    } else {
+                        print("Video export failed")
+                    }
                 }
+            } else {
+                exportURL = audioURL
             }
         }
         .navigationBarBackButtonHidden(true)

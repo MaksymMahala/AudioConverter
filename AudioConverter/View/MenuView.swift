@@ -14,7 +14,9 @@ struct MenuView: View {
         NavigationView {
             ZStack {
                 VStack {
-                    HeaderWithPay(title: "Convert")
+                    HeaderWithPay(title: "Convert") {
+                        tabViewModel.showSubsView = true
+                    }
                     MediaTabSelector(viewModel: tabViewModel)
                         .padding(.top)
                     ScrollView {
@@ -36,6 +38,9 @@ struct MenuView: View {
                 if tabViewModel.isLoading {
                     CustomLoadingView()
                 }
+            }
+            .fullScreenCover(isPresented: $tabViewModel.showSubsView) {
+                SubsView()
             }
             .navigationBarHidden(true)
             .edgesIgnoringSafeArea(.bottom)

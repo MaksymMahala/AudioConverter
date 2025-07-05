@@ -29,9 +29,24 @@ struct AudioConversionSheet: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("Audio conversion")
-                        .font(Font.custom(size: 18, weight: .bold))
-                        .foregroundStyle(Color.darkBlueD90)
+                    switch viewModel.audioAction {
+                    case .convert:
+                        Text("Audio conversion")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .trim:
+                        Text("Trim audio")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .createMelody:
+                        Text("Create a melody")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .edit:
+                        Text("Edit Audio")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
@@ -56,7 +71,16 @@ struct AudioConversionSheet: View {
                     isLoadingAudio = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.audioAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .trim:
+                        viewModel.isEditorPresented = true
+                    case .createMelody:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.isEditorPresented = true
+                    }
                 }
             )
         }

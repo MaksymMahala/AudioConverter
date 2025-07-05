@@ -23,12 +23,20 @@ final class VideoToolsViewModel: ObservableObject {
         ToolItem(title: "Set cover", subtitle: "", iconName: "iconoir_bookmark-book")
     ]
     
+    @Published var videoAction: VideoAction = .convert
     @Published var inputLink: String = ""
     @Published var isDrivePickerPresented = false
     @Published var isDocumentPickerPresented = false
     @Published var videoURL: URL?
     @Published var openAudioView = false
     @Published var isEditorPresented = false
+    @Published var isTrimEditorPresented = false
+    @Published var isCutEditorPresented = false
+    @Published var isCompressEditorPresented = false
+    @Published var isDeleteEditorPresented = false
+    @Published var isAddWatermarkEditorPresented = false
+    @Published var isSetCoverEditorPresented = false
+
     @Published var isLinkValid: Bool = false
     @Published var isCameraPresented = false
 
@@ -60,7 +68,24 @@ final class VideoToolsViewModel: ObservableObject {
 
                     self.videoURL = localURL
                     self.isLinkValid = true
-                    self.isEditorPresented = true
+                    switch self.videoAction {
+                    case .convert:
+                        self.isEditorPresented = true
+                    case .videoToAudio:
+                        self.isEditorPresented = true
+                    case .trim:
+                        self.isTrimEditorPresented = true
+                    case .cut:
+                        self.isCutEditorPresented = true
+                    case .compress:
+                        self.isCompressEditorPresented = true
+                    case .delete:
+                        self.isDeleteEditorPresented = true
+                    case .waterMark:
+                        self.isAddWatermarkEditorPresented = true
+                    case .setCover:
+                        self.isSetCoverEditorPresented = true
+                    }
                     dismiss()
                 }
             }

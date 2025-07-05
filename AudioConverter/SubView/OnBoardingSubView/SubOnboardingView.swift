@@ -16,6 +16,7 @@ struct SubOnboardingView: View {
     
     var body: some View {
         VStack(alignment: .center, spacing: 15) {
+            Spacer()
             HStack {
                 Button {
                     withAnimation {
@@ -31,16 +32,18 @@ struct SubOnboardingView: View {
                 
                 Image(icon)
             }
-            .padding(.horizontal)
+            .padding()
             
             Image(banerImage)
                 .resizable()
                 .scaledToFit()
-                .frame(height: 500)
+                .frame(height: 450)
             
             Text(title)
                 .foregroundStyle(Color.darkBlueD90)
                 .font(Font.titleMori32)
+                .frame(height: 100)
+                .lineLimit(2)
             
             let isLongSubtitle = subTitle.count > 50
 

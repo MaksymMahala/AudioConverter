@@ -28,9 +28,20 @@ struct ImageConversionSheet: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("Image conversion")
-                        .font(Font.custom(size: 18, weight: .bold))
-                        .foregroundStyle(Color.darkBlueD90)
+                    switch viewModel.imageAction {
+                    case .convert:
+                        Text("Image conversion")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .edit:
+                        Text("Edit Image")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .gif:
+                        Text("Creating GIF files")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
@@ -50,7 +61,14 @@ struct ImageConversionSheet: View {
                     isLoadingImage = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.imageAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.openEditImageEditor = true
+                    case .gif:
+                        viewModel.openGIFImageEditor = true
+                    }
                 }
             )
         }
@@ -65,7 +83,14 @@ struct ImageConversionSheet: View {
                     isLoadingImage = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.imageAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.openEditImageEditor = true
+                    case .gif:
+                        viewModel.openGIFImageEditor = true
+                    }
                 }
             )
         }
@@ -83,7 +108,14 @@ struct ImageConversionSheet: View {
                     isLoadingImage = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.imageAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .edit:
+                        viewModel.openEditImageEditor = true
+                    case .gif:
+                        viewModel.openEditImageEditor = true
+                    }
                 }
             )
         }

@@ -28,9 +28,40 @@ struct VideoConversionSheet: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("Video conversion")
-                        .font(Font.custom(size: 18, weight: .bold))
-                        .foregroundStyle(Color.darkBlueD90)
+                    switch viewModel.videoAction {
+                    case .convert:
+                        Text("Video conversion")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .videoToAudio:
+                        Text("Video to audio")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .trim:
+                        Text("Trim video")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .cut:
+                        Text("Cut video")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .compress:
+                        Text("Compress video")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .delete:
+                        Text("Delete a video")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .waterMark:
+                        Text("Add watermark")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    case .setCover:
+                        Text("Set Cover")
+                            .font(Font.custom(size: 18, weight: .bold))
+                            .foregroundStyle(Color.darkBlueD90)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
@@ -50,7 +81,24 @@ struct VideoConversionSheet: View {
                     isLoadingVideo = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.videoAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .videoToAudio:
+                        viewModel.isEditorPresented = true
+                    case .trim:
+                        viewModel.isTrimEditorPresented = true
+                    case .cut:
+                        viewModel.isCutEditorPresented = true
+                    case .compress:
+                        viewModel.isCompressEditorPresented = true
+                    case .delete:
+                        viewModel.isDeleteEditorPresented = true
+                    case .waterMark:
+                        viewModel.isAddWatermarkEditorPresented = true
+                    case .setCover:
+                        viewModel.isSetCoverEditorPresented = true
+                    }
                 }
             )
         }
@@ -63,7 +111,24 @@ struct VideoConversionSheet: View {
                     isLoadingVideo = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.videoAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .videoToAudio:
+                        viewModel.isEditorPresented = true
+                    case .trim:
+                        viewModel.isTrimEditorPresented = true
+                    case .cut:
+                        viewModel.isCutEditorPresented = true
+                    case .compress:
+                        viewModel.isCompressEditorPresented = true
+                    case .delete:
+                        viewModel.isDeleteEditorPresented = true
+                    case .waterMark:
+                        viewModel.isAddWatermarkEditorPresented = true
+                    case .setCover:
+                        viewModel.isSetCoverEditorPresented = true
+                    }
                 }
             )
         }
@@ -81,7 +146,24 @@ struct VideoConversionSheet: View {
                     isLoadingVideo = true
                 },
                 onPicked: {
-                    viewModel.isEditorPresented = true
+                    switch viewModel.videoAction {
+                    case .convert:
+                        viewModel.isEditorPresented = true
+                    case .videoToAudio:
+                        viewModel.isEditorPresented = true
+                    case .trim:
+                        viewModel.isTrimEditorPresented = true
+                    case .cut:
+                        viewModel.isCutEditorPresented = true
+                    case .compress:
+                        viewModel.isCompressEditorPresented = true
+                    case .delete:
+                        viewModel.isDeleteEditorPresented = true
+                    case .waterMark:
+                        viewModel.isAddWatermarkEditorPresented = true
+                    case .setCover:
+                        viewModel.isSetCoverEditorPresented = true
+                    }
                 }
             )
         }

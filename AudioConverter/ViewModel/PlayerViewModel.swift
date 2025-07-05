@@ -16,6 +16,8 @@ final class PlayerViewModel: ObservableObject {
     @Published var currentTime: Double = 0
     @Published var isPlaying: Bool = false
     @Published var duration: Double?
+    @Published var timeRangeStart: Double = 0
+    @Published var timeRangeEnd: Double = 5
     @Published var currentEffect: String? = nil
     @Published var waveform: [CGFloat] = []
     
@@ -71,6 +73,8 @@ final class PlayerViewModel: ObservableObject {
         setupAudioEngine()
 
         duration = audioFile != nil ? audioFile!.length.toSeconds(sampleRate: audioFile!.processingFormat.sampleRate) : nil
+        timeRangeStart = 0
+        timeRangeEnd = min(5.0, self.duration ?? 5.0)
         currentTime = 0
     }
 
@@ -226,6 +230,27 @@ final class PlayerViewModel: ObservableObject {
         CoreDataManager.shared.addSavedFile(fileURL: url, fileName: fileName, type: type, fileSize: fileSize(fileURL: url), duration: formatedTime(duration), image: selectedImage, imageFileExtension: selectedFormat)
     }
     
+    func saveEditedImageToDB(fileName: String, type: String, selectedImage: UIImage?) {
+        guard let image = selectedImage else {
+            print("No image to save")
+            return
+        }
+        
+        let imageData = image.jpegData(compressionQuality: 1.0)
+        let fileSizeValue = UInt64(imageData?.count ?? 0)
+        
+        CoreDataManager.shared.addSavedFile(
+            fileURL: URL(fileURLWithPath: ""),
+            fileName: fileName,
+            type: type,
+            fileSize: fileSizeValue,
+            duration: "N/A",
+            image: image,
+            imageFileExtension: selectedFormat.lowercased()
+        )
+    }
+
+    
     func fileSize(fileURL: URL) -> UInt64 {
         if let fileSize = try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? UInt64 {
             return fileSize
@@ -254,7 +279,6 @@ extension PlayerViewModel {
         case "WAV 44100":
             let ext = "wav"
             let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
-
             VideoAudioConverter.convertToWAV(inputURL: originalAudioURL, outputURL: outputURL) { success in
                 DispatchQueue.main.async {
                     if success {
@@ -268,11 +292,13 @@ extension PlayerViewModel {
             return
         case "MP3":
             exportMP3(from: originalAudioURL) { mp3URL in
-                if let mp3URL = mp3URL {
-                    completion(mp3URL)
-                } else {
-                    print("MP3 export failed")
-                    completion(nil)
+                DispatchQueue.main.async {
+                    if let mp3URL = mp3URL {
+                        completion(mp3URL)
+                    } else {
+                        print("MP3 export failed")
+                        completion(nil)
+                    }
                 }
             }
             return
@@ -282,8 +308,15 @@ extension PlayerViewModel {
         }
 
         let asset = AVURLAsset(url: originalAudioURL)
+
+        guard asset.tracks(withMediaType: .audio).first != nil else {
+            print("❌ No audio track found in the original file")
+            completion(nil)
+            return
+        }
+
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: preset) else {
-            print("Could not create export session")
+            print("❌ Could not create export session")
             completion(nil)
             return
         }
@@ -293,14 +326,16 @@ extension PlayerViewModel {
         exportSession.outputURL = outputURL
         exportSession.outputFileType = fileType(forExtension: ext)
         exportSession.shouldOptimizeForNetworkUse = true
+        exportSession.timeRange = CMTimeRange(start: .zero, duration: asset.duration) // ✅ додаємо
 
         exportSession.exportAsynchronously {
             DispatchQueue.main.async {
                 switch exportSession.status {
                 case .completed:
+                    print("✅ Exported to: \(outputURL)")
                     completion(outputURL)
                 case .failed, .cancelled:
-                    print("Export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
+                    print("❌ Export failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
                     completion(nil)
                 default:
                     completion(nil)
@@ -318,12 +353,32 @@ extension PlayerViewModel {
         }
     }
     
-    func exportMP3(from pcmURL: URL, completion: @escaping (URL?) -> Void) {
-        let mp3URL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp3")
-        DispatchQueue.global(qos: .userInitiated).async {
-            let success = MP3Encoder.convertPCMtoMP3(pcmURL: pcmURL, mp3URL: mp3URL)
-            DispatchQueue.main.async {
-                completion(success ? mp3URL : nil)
+    func exportMP3(from originalAudioURL: URL, completion: @escaping (URL?) -> Void) {
+        let wavURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
+        
+        VideoAudioConverter.convertToWAV(inputURL: originalAudioURL, outputURL: wavURL) { success in
+            guard success else {
+                print("❌ WAV conversion failed")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+
+            let mp3URL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp3")
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                let success = MP3Encoder.convertPCMtoMP3(pcmURL: wavURL, mp3URL: mp3URL)
+                
+                DispatchQueue.main.async {
+                    if success {
+                        print("✅ MP3 export succeeded at: \(mp3URL)")
+                        completion(mp3URL)
+                    } else {
+                        print("❌ MP3 export failed")
+                        completion(nil)
+                    }
+                }
             }
         }
     }
@@ -408,6 +463,62 @@ extension PlayerViewModel {
         default:
             print("Unsupported format: \(selectedFormat)")
             completion(nil)
+        }
+    }
+}
+
+extension PlayerViewModel {
+    func exportTrimmedAudio(from originalURL: URL, completion: @escaping (URL?) -> Void) {
+        let asset = AVAsset(url: originalURL)
+        
+        let startTime = CMTime(seconds: timeRangeStart, preferredTimescale: 600)
+        let endTime = CMTime(seconds: timeRangeEnd, preferredTimescale: 600)
+        let timeRange = CMTimeRange(start: startTime, end: endTime)
+
+        let composition = AVMutableComposition()
+        
+        guard let assetTrack = asset.tracks(withMediaType: .audio).first,
+              let compTrack = composition.addMutableTrack(withMediaType: .audio,
+                                                           preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            print("Failed to get audio track.")
+            completion(nil)
+            return
+        }
+
+        do {
+            try compTrack.insertTimeRange(timeRange, of: assetTrack, at: .zero)
+        } catch {
+            print("Failed to insert time range: \(error)")
+            completion(nil)
+            return
+        }
+
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("trimmed.m4a")
+
+        if FileManager.default.fileExists(atPath: outputURL.path) {
+            try? FileManager.default.removeItem(at: outputURL)
+        }
+
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetAppleM4A) else {
+            print("Failed to create export session.")
+            completion(nil)
+            return
+        }
+
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .m4a
+        exportSession.timeRange = CMTimeRange(start: .zero, duration: timeRange.duration)
+
+        exportSession.exportAsynchronously {
+            DispatchQueue.main.async {
+                if exportSession.status == .completed {
+                    print("Trimmed audio exported to: \(outputURL)")
+                    completion(outputURL)
+                } else {
+                    print("Export failed: \(exportSession.error?.localizedDescription ?? "Unknown error")")
+                    completion(nil)
+                }
+            }
         }
     }
 }

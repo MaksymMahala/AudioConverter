@@ -30,8 +30,22 @@ struct ImageToolsView: View {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.tools) { tool in
                     Button {
-                        withAnimation {
-                            viewModel.openImageView = true
+                        switch tool.title {
+                        case "Convert images":
+                            withAnimation {
+                                viewModel.imageAction = .convert
+                                viewModel.openImageView = true
+                            }
+                        case "Creating GIF files":
+                            if PurchaseManager.instance.userPurchaseIsActive {
+                                viewModel.imageAction = .gif
+                                viewModel.openImageView = true
+                            }
+                        default:
+                            withAnimation {
+                                viewModel.imageAction = .convert
+                                viewModel.openImageView = true
+                            }
                         }
                     } label: {
                         ToolCard(tool: tool)
@@ -41,6 +55,10 @@ struct ImageToolsView: View {
             .padding(.horizontal)
 
             Button {
+                withAnimation {
+                    viewModel.openImageView = true
+                    viewModel.imageAction = .edit
+                }
             } label: {
                 WideToolCard(tool: viewModel.bottomTool)
             }
@@ -49,8 +67,14 @@ struct ImageToolsView: View {
         .fullScreenCover(isPresented: $viewModel.isEditorPresented) {
             ImageEditorView(imageURL: viewModel.imageURL, selectedImage: $viewModel.selectedImage, isLoading: $isLoadingImage, isEditorPresented: $viewModel.isEditorPresented)
         }
+        .fullScreenCover(isPresented: $viewModel.openEditImageEditor) {
+            EditImageEditorView(imageURL: viewModel.imageURL, selectedImage: $viewModel.selectedImage, isLoading: $isLoadingImage)
+        }
         .sheet(isPresented: $viewModel.openImageView) {
             ImageConversionSheet(isLoadingImage: $isLoadingImage, viewModel: viewModel)
+        }
+        .fullScreenCover(isPresented: $viewModel.openGIFImageEditor) {
+            GIFImageEditorView(image: viewModel.selectedImage, isLoading: $isLoadingImage)
         }
     }
 }
